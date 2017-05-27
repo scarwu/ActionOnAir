@@ -21,18 +21,17 @@ android {
 
 repositories {
     mavenCentral()
-
-    flatDir {
-        dirs 'libs'
-    }
 }
 
 dependencies {
 
+    // Youtube API Client
+    // compile 'com.google.api-client:google-api-client:1.22.0'
+
     // Facebook Android SDK
-    compile(name: 'facebook-android-sdk-4.23.0', ext: 'aar')
     compile 'com.facebook.android:facebook-android-sdk:4.+'
 
+    // Original
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
