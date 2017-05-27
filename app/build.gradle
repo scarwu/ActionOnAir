@@ -27,7 +27,27 @@ dependencies {
 
     // Google API Client
     compile 'com.google.code.findbugs:jsr305:2.0.1'
-    compile('com.google.api-client:google-api-client:1.22.0') {
+    compile('com.google.apis:google-api-services-youtube:v3-rev183-1.22.0') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
+    }
+    compile('com.google.oauth-client:google-oauth-client-jetty:1.+') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
+    }
+    compile('com.google.http-client:google-http-client-jackson2:1.+') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
+    }
+    compile('com.google.api-client:google-api-client-java6:1.+') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
+    }
+    compile('com.google.api-client:google-api-client:1.22') {
         exclude module: 'httpclient' //by artifact name
         exclude group: 'org.apache.httpcomponents' //by group
         exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
