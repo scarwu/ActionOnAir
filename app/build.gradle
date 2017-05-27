@@ -25,8 +25,13 @@ repositories {
 
 dependencies {
 
-    // Youtube API Client
-    // compile 'com.google.api-client:google-api-client:1.22.0'
+    // Google API Client
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile('com.google.api-client:google-api-client:1.22.0') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient' //by both name and group
+    }
 
     // Facebook Android SDK
     compile 'com.facebook.android:facebook-android-sdk:4.+'
