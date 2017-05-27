@@ -2,9 +2,12 @@
     <string name="app_name">Action on Air</string>
     <string name="facebook_app_id">106449389908395</string>
     <string name="fb_login_protocol_scheme">fb106449389908395</string>
-    <string name="connect">Connect</string>
-    <string name="connect_fb">Facebook</string>
-    <string name="connect_google">Google</string>
-    <string name="action_start">Start</string>
-    <string name="action_stop">Stop</string>
+
+    <string name="live_now">Live!</string>
+
+    <string name="camera_list">Cameras</string>
+    <string name="camera_nfc_reader">NFC</string>
+    <string name="sns_list">Social Networks</string>
+    <string name="sns_fb_auth">Facebook</string>
+    <string name="sns_google_auth">Google</string>
 </resources>
