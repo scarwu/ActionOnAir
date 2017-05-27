@@ -11,7 +11,7 @@
     tools:layout_editor_absoluteX="0dp">
 
     <LinearLayout
-        android:id="@+id/SNSBlock"
+        android:id="@+id/snsBlock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -23,7 +23,7 @@
         tools:layout_editor_absoluteY="8dp">
 
         <TextView
-            android:id="@+id/SNSList"
+            android:id="@+id/snsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -90,20 +90,20 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/CameraBlock"
+        android:id="@+id/cameraBlock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/SNSBlock"
+        android:layout_below="@+id/snsBlock"
         android:layout_weight="1"
         android:background="#666"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@+id/SNSBlock"
+        app:layout_constraintTop_toBottomOf="@+id/snsBlock"
         tools:layout_editor_absoluteX="8dp">
 
         <TextView
-            android:id="@+id/CameraList"
+            android:id="@+id/cameraTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -112,7 +112,7 @@
             android:textColor="#fff" />
 
         <Button
-            android:id="@+id/NFCReader"
+            android:id="@+id/cameraNFCReader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -125,7 +125,7 @@
             android:fillViewport="false">
 
             <ListView
-                android:id="@+id/Cameras"
+                android:id="@+id/cameraList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </ScrollView>

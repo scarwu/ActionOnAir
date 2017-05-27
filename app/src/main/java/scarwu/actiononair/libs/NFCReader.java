@@ -1,6 +1,7 @@
 package scarwu.actiononair.libaries;
 
 public class NFCReader {
+
     public NFCReader() {
 
     }
