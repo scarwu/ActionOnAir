@@ -1,97 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#333"
+    android:padding="10dp"
     tools:context="scarwu.actiononair.MainActivity"
     tools:layout_editor_absoluteY="81dp"
     tools:layout_editor_absoluteX="0dp">
 
     <LinearLayout
-        android:id="@+id/linearLayout3"
-        android:layout_width="344dp"
+        android:id="@+id/SNSBlock"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:background="#666"
         android:orientation="vertical"
+        android:layout_marginBottom="10dp"
         tools:layout_editor_absoluteX="8dp"
         tools:layout_editor_absoluteY="8dp">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/SNSList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:padding="5dp"
             android:text="@string/sns_list"
             android:textAlignment="textStart"
             android:textColor="#fff" />
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button3"
+                android:id="@+id/snsFBAuth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/snsFBLive"
                 android:layout_weight="1"
                 android:text="@string/sns_fb_auth" />
 
             <Button
-                android:id="@+id/button2"
+                android:id="@+id/snsFBLive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/live_now" />
-        </LinearLayout>
+                android:text="@string/live_now"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
+        </RelativeLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button5"
+                android:id="@+id/snsGoogleAuth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/snsGoogleLive"
+                android:layout_toStartOf="@+id/snsGoogleLive"
                 android:layout_weight="1"
                 android:text="@string/sns_google_auth" />
 
             <Button
-                android:id="@+id/button4"
+                android:id="@+id/snsGoogleLive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/live_now" />
-        </LinearLayout>
+                android:text="@string/live_now"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
+        </RelativeLayout>
 
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="344dp"
+        android:id="@+id/CameraBlock"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/SNSBlock"
         android:layout_weight="1"
         android:background="#666"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout3"
+        app:layout_constraintTop_toBottomOf="@+id/SNSBlock"
         tools:layout_editor_absoluteX="8dp">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/CameraList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:padding="5dp"
             android:text="@string/camera_list"
             android:textColor="#fff" />
 
         <Button
-            android:id="@+id/button6"
+            android:id="@+id/NFCReader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -104,10 +125,11 @@
             android:fillViewport="false">
 
             <ListView
+                android:id="@+id/Cameras"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </ScrollView>
 
     </LinearLayout>
 
-</android.support.constraint.ConstraintLayout>
+</RelativeLayout>
