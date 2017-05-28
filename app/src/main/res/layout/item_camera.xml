@@ -7,12 +7,12 @@
         android:id="@+id/cameraSSID"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Button"
+        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/removeCamera"
-        android:layout_toStartOf="@+id/removeCamera"
-        android:text="Button" />
+        android:layout_toStartOf="@+id/removeCamera" />
 
     <Button
         android:id="@+id/removeCamera"

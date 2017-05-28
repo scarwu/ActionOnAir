@@ -118,17 +118,10 @@
             android:layout_weight="1"
             android:text="@string/camera_nfc_reader" />
 
-        <ScrollView
+        <ListView
+            android:id="@+id/cameraList"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fillViewport="false">
-
-            <ListView
-                android:id="@+id/cameraList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </ScrollView>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

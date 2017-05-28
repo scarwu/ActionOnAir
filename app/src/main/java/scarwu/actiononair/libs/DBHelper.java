@@ -1,5 +1,5 @@
 /**
- * Main Activity
+ * DB Helper
  *
  * @package     Action on Air
  * @author      ScarWu
@@ -14,72 +14,101 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DBHelper extends SQLiteOpenHelper {
 
-	public DBHelper(Context context) {
-		super(context, "ActionOnAir", null, 4);
-	}
+    public DBHelper(Context context) {
+        super(context, "ActionOnAir", null, 1);
+    }
 
-	@Override
-	public void onCreate(SQLiteDatabase db) {
-		db.execSQL("CREATE TABLE cameras ("
-			+ "id INTEGER primary key autoincrement,"
-			+ "provider TEXT,"
-			+ "ssid TEXT,"
-			+ "pass TEXT)"
-		);
-	}
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        Log.i("AoA-SQLite", "Create");
 
-	@Override
-	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		db.execSQL("DROP TABLE IF EXISTS cameras");
+        db.execSQL("CREATE TABLE cameras ("
+            + "id INTEGER primary key autoincrement,"
+            + "provider TEXT,"
+            + "ssid TEXT,"
+            + "pass TEXT)"
+        );
+    }
 
-		onCreate(db);
-	}
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.i("AoA-SQLite", "upgrade");
 
-	/**
-	 * Read Cameras
-	 *
-	 * @return
-	 */
-	public Cursor readCameras() {
-		SQLiteDatabase db = this.getReadableDatabase();
-		Cursor cursor = db.query("cameras", null, null, null, null, null, null);
-		
-		return cursor;
-	}
+        db.execSQL("DROP TABLE IF EXISTS cameras");
 
-	/**
-	 * Add Camera
-	 *
-	 * @param provider
-	 * @param ssid
-	 * @param pass
-	 *
-	 * @return
-	 */
-	public long addCamera(String provider, String ssid, String pass) {
-		SQLiteDatabase db = this.getWritableDatabase();
-		
-		ContentValues cv = new ContentValues();
-		cv.put("provider", provider);
-		cv.put("ssid", ssid);
-		cv.put("pass", pass);
+        onCreate(db);
+    }
 
-		return db.insert("cameras", null, cv);
-	}
+    /**
+     * Read Cameras
+     *
+     * @return
+     */
+    public Cursor readCameras() {
+        Log.i("AoA-SQLite", "Read Cameras");
 
-	/**
-	 * Remove Camera
-	 *
-	 * @param id
-	 */
-	public void removeCamera(int id) {
-		SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
 
-		String[] args = { Integer.toString(id) };
+        return db.query("cameras", null, null, null, null, null, null);
+    }
 
-		db.delete("cameras", "id=?", args);
-	}
+    /**
+     * Get Camera
+     *
+     * @return
+     */
+    public Cursor getCamera(int id) {
+        Log.i("AoA-SQLite", "Get Camera");
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] args = {
+            Integer.toString(id)
+        };
+
+        return db.query("cameras", null, "id=?", args, null, null, null);
+    }
+
+    /**
+     * Add Camera
+     *
+     * @param provider
+     * @param ssid
+     * @param pass
+     *
+     * @return
+     */
+    public long addCamera(String provider, String ssid, String pass) {
+        Log.i("AoA-SQLite", "Add Camera");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cv = new ContentValues();
+        cv.put("provider", provider);
+        cv.put("ssid", ssid);
+        cv.put("pass", pass);
+
+        return db.insert("cameras", null, cv);
+    }
+
+    /**
+     * Remove Camera
+     *
+     * @param id
+     */
+    public void removeCamera(int id) {
+        Log.i("AoA-SQLite", "Remove Camera");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String[] args = {
+            Integer.toString(id)
+        };
+
+        db.delete("cameras", "id=?", args);
+    }
 }

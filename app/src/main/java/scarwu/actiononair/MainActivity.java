@@ -74,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        // DB Helper
+        dbHelper = new DBHelper(this);
+
         // Initailize View Widgets
         initSNSFacebookWidgets();
         initSNSGoogleWidgets();
@@ -95,9 +98,6 @@ public class MainActivity extends AppCompatActivity {
         nfcFilters = new IntentFilter[] {
             nfcIntentFilter
         };
-
-        // DB Helper
-        dbHelper = new DBHelper(this);
     }
 
     @Override
@@ -116,13 +116,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Log.i("NFC", "Intent: " + intent);
+        Log.i("AoA-NFC", "Intent: " + intent);
 
         String action = intent.getAction();
         String type = intent.getType();
 
-        Log.i("NFC", "IntentAction: " + action);
-        Log.i("NFC", "IntentType: " + type);
+        Log.i("AoA-NFC", "IntentAction: " + action);
+        Log.i("AoA-NFC", "IntentType: " + type);
 
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
             && ActionCam.MIME_TYPE.equals(type)) {
@@ -244,27 +244,41 @@ public class MainActivity extends AppCompatActivity {
      * Refresh Camera List
      */
     private void refreshCameraList() {
-        dbCursor = dbHelper.readCameras();
+
+        try {
+            dbCursor = dbHelper.readCameras();
+        } catch (NullPointerException e) {
+            return;
+        }
 
         ArrayList<Integer> cameraIdList = new ArrayList<Integer>();
         ArrayList<String> cameraSSIDList = new ArrayList<String>();
 
-        do {
-            cameraIdList.add(dbCursor.getInt(dbCursor.getColumnIndex("id")));
-            cameraSSIDList.add(dbCursor.getString(dbCursor.getColumnIndex("ssid")));
-            dbCursor.moveToNext();
-        } while (!dbCursor.isLast());
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            while (!dbCursor.isAfterLast()) {
+                int id = dbCursor.getInt(dbCursor.getColumnIndex("id"));
+                String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
+
+                Log.i("AoA-CameraView", "Item: " + id + ", " + ssid);
+
+                cameraIdList.add(id);
+                cameraSSIDList.add(ssid);
+
+                dbCursor.moveToNext();
+            }
+        }
 
         cameraIdArray = (Integer[]) cameraIdList.toArray(new Integer[cameraIdList.size()]);
         cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
 
+        Log.i("AoA-CameraView", "Set Adapter");
         cameraListAdapter = new ListAdapter();
         cameraList.setAdapter(cameraListAdapter);
     }
 
     private class ListAdapter extends BaseAdapter {
-
-//      private HashMap<String, Boolean> tmpList = new HashMap<String, Boolean>();
 
         @Override
         public int getCount() {
@@ -311,6 +325,9 @@ public class MainActivity extends AppCompatActivity {
 
                     // TODO Auto-generated method stub
                     dbHelper.removeCamera(cameraIdArray[listItem]);
+
+                    // Refresh Camera List
+                    refreshCameraList();
                 }
             });
 
