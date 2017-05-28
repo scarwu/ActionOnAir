@@ -17,18 +17,40 @@
         <activity android:name=".MainActivity" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
 
-        <activity android:name=".ControlPanelActivity" android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED"/>
+            </intent-filter>
+
+            <!--<meta-data android:name="android.nfc.action.TECH_DISCOVERED">-->
+                <!--<tech-list>-->
+                    <!--<tech>android.nfc.tech.NfcA</tech>-->
+                    <!--<tech>android.nfc.tech.NfcB</tech>-->
+                    <!--<tech>android.nfc.tech.NfcF</tech>-->
+                    <!--<tech>android.nfc.tech.NfcV</tech>-->
+                    <!--<tech>android.nfc.tech.Ndef</tech>-->
+                    <!--<tech>android.nfc.tech.NdefFormatable</tech>-->
+                    <!--<tech>android.nfc.tech.MifareClassic</tech>-->
+                    <!--<tech>android.nfc.tech.MifareUltralight</tech>-->
+                    <!--<tech>android.nfc.tech.IsoDep</tech>-->
+                <!--</tech-list>-->
+            <!--</meta-data>-->
         </activity>
+
+        <!--<activity android:name=".ControlPanelActivity" android:launchMode="singleTop">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN" />-->
+                <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
+        <!--</activity>-->
 
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
 
