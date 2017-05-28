@@ -9,9 +9,12 @@
 
 package scarwu.actiononair;
 
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
+import android.content.Context;
 import android.content.IntentFilter;
 import android.app.PendingIntent;
 import android.view.View;
@@ -24,7 +27,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import android.nfc.NfcAdapter;
@@ -38,6 +40,7 @@ import scarwu.actiononair.libs.camera.sony.ActionCam;
 import scarwu.actiononair.libs.DBHelper;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     // Flags
     private boolean isFBAuth = false;
     private boolean isGoogleAuth = false;
+
+    // Wifi
+    WifiManager wifiManager;
 
     // NFC
     private NfcAdapter nfcAdapter;
@@ -81,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
         initSNSFacebookWidgets();
         initSNSGoogleWidgets();
         initCameraWidgets();
+
+        // Wifi
+        wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         // NFC
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -314,7 +323,19 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View arg0) {
 
                     // TODO Auto-generated method stub
-//                    callSkype(phoneArray[listItem]);
+                    dbCursor = dbHelper.getCamera(cameraIdArray[listItem]);
+
+                    if (0 != dbCursor.getCount()) {
+
+                        dbCursor.moveToFirst();
+
+                        String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
+                        String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
+                        String pass = dbCursor.getString(dbCursor.getColumnIndex("pass"));
+
+                        // Connect Camera Wifi Lan
+                        connectWifi(provider, ssid, pass);
+                    }
                 }
             });
 
@@ -332,6 +353,60 @@ public class MainActivity extends AppCompatActivity {
             });
 
             return listView;
+        }
+    }
+
+    /**
+     * Connect Wifi
+     *
+     * @param ssid
+     * @param pass
+     */
+    private void connectWifi(String provider, String ssid, String pass) {
+
+        // New Wifi Config
+        WifiConfiguration newConf = new WifiConfiguration();
+
+        newConf.SSID = "\"" + ssid + "\"";
+
+        // Sony Action Cam use WPA
+        if ("sony".equals(provider)) {
+            newConf.preSharedKey = "\"" + pass + "\"";
+            newConf.hiddenSSID = true;
+            newConf.status = WifiConfiguration.Status.ENABLED;
+
+            newConf.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+            newConf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+            newConf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+            newConf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+            newConf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+            newConf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+            newConf.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+            newConf.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+        } else {
+            return;
+        }
+
+        wifiManager.addNetwork(newConf);
+        wifiManager.setWifiEnabled(true);
+
+        // Get All Config
+        List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
+
+        for (WifiConfiguration tmpConf : list) {
+            if(tmpConf.SSID == null
+                || tmpConf.SSID.equals(newConf.SSID)) {
+
+                continue;
+            }
+
+            Log.i("AoA-WifiConfig", "SSID: " + newConf.SSID);
+
+            wifiManager.disconnect();
+            wifiManager.enableNetwork(tmpConf.networkId, true);
+            wifiManager.reconnect();
+
+            break;
         }
     }
 
