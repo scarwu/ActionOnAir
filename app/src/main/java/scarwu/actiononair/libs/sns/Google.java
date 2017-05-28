@@ -7,7 +7,7 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.platform;
+package scarwu.actiononair.libs.sns;
 
 import java.io.File;
 import java.io.BufferedReader;
@@ -38,16 +38,21 @@ import java.util.List;
 
 public class Google {
 
-    public Account account;
-    public LiveStream liveStream;
+    private static boolean isInit = false;
+
+    public static Account account;
+    public static LiveStream liveStream;
 
     public Google() {
 
-//        FacebookSdk.sdkInitialize(getApplicationContext());
-//        AppEventsLogger.activateApp(this);
+        if (isInit) {
+            return;
+        }
 
         account = new Account();
         liveStream = new LiveStream();
+
+        isInit = true;
     }
 
     public class Account {

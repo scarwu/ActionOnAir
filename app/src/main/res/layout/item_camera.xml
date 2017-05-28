@@ -6,20 +6,21 @@
     <Button
         android:id="@+id/cameraSSID"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Button"
-        android:layout_alignParentTop="true"
+        android:layout_height="60dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/removeCamera"
-        android:layout_toStartOf="@+id/removeCamera" />
+        android:layout_toStartOf="@+id/removeCamera"
+        android:text="SSID"
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/removeCamera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:text="@string/remove_camera" />
+        android:text="@string/icon_remove" />
 </RelativeLayout>

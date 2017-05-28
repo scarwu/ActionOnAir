@@ -9,14 +9,17 @@
 
 package scarwu.actiononair;
 
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.app.PendingIntent;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.view.View;
 import android.util.Log;
 import android.database.Cursor;
@@ -33,25 +36,19 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 
 // Custom Libs
-import scarwu.actiononair.ControlPanelActivity;
-import scarwu.actiononair.libs.platform.Facebook;
-import scarwu.actiononair.libs.platform.Google;
-import scarwu.actiononair.libs.camera.sony.ActionCam;
 import scarwu.actiononair.libs.DBHelper;
+import scarwu.actiononair.libs.FontManager;
+import scarwu.actiononair.libs.sns.Facebook;
+import scarwu.actiononair.libs.sns.Google;
+import scarwu.actiononair.libs.camera.sony.ActionCam;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
 
 public class MainActivity extends AppCompatActivity {
 
     // Widgets
-    private Button snsFBAuth;
-    private Button snsFBLive;
-    private Button snsGoogleAuth;
-    private Button snsGoogleLive;
-    private Button cameraNFCReader;
     private ListView cameraList;
-
     private PopupWindow nfcPopupWindow;
 
     // Flags
@@ -71,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
     private DBHelper dbHelper;
 	private Cursor dbCursor;
 
-    private ListAdapter cameraListAdapter;
     private Integer[] cameraIdArray;
     private String[] cameraSSIDArray;
 
@@ -85,9 +81,34 @@ public class MainActivity extends AppCompatActivity {
         dbHelper = new DBHelper(this);
 
         // Wifi
-        wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        initWifiDevice();
 
         // NFC
+        initNFCDevice();
+
+        // Facebook
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        AppEventsLogger.activateApp(this);
+
+        // Google
+
+        // Initialize View Widgets
+        initSNSFacebookWidgets();
+        initSNSGoogleWidgets();
+        initCameraWidgets();
+    }
+
+    /**
+     * Init Wifi Device
+     */
+    private void initWifiDevice() {
+        wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    }
+
+    /**
+     * Init NFC Device
+     */
+    private void initNFCDevice() {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         nfcPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
 
@@ -103,11 +124,6 @@ public class MainActivity extends AppCompatActivity {
         nfcFilters = new IntentFilter[] {
             nfcIntentFilter
         };
-
-        // Initialize View Widgets
-        initSNSFacebookWidgets();
-        initSNSGoogleWidgets();
-        initCameraWidgets();
     }
 
     @Override
@@ -128,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         Log.i("AoA-NFC", "Intent: " + intent);
 
+        // Get Status
         String action = intent.getAction();
         String type = intent.getType();
 
@@ -157,11 +174,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initSNSFacebookWidgets() {
 
+        // Widgets
+        Button auth = (Button) findViewById(R.id.snsFBAuth);
+        Button live = (Button) findViewById(R.id.snsFBLive);
+
         // Auth
-        snsFBAuth = (Button) findViewById(R.id.snsFBAuth);
-        snsFBAuth.setOnClickListener(new View.OnClickListener() {
+        auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
+
                 if (isFBAuth) {
                     new Facebook().account.disconnect();
                 } else {
@@ -171,8 +192,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Live
-        snsFBLive = (Button) findViewById(R.id.snsFBLive);
-        snsFBLive.setOnClickListener(new View.OnClickListener() {
+        live.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+        live.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 if (!isFBAuth) {
@@ -192,9 +213,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initSNSGoogleWidgets() {
 
+        // Widgets
+        Button auth = (Button) findViewById(R.id.snsGoogleAuth);
+        Button live = (Button) findViewById(R.id.snsGoogleLive);
+
         // Auth
-        snsGoogleAuth = (Button) findViewById(R.id.snsGoogleAuth);
-        snsGoogleAuth.setOnClickListener(new View.OnClickListener() {
+        auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 if (isGoogleAuth) {
@@ -206,8 +230,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Live
-        snsGoogleLive = (Button) findViewById(R.id.snsGoogleLive);
-        snsGoogleLive.setOnClickListener(new View.OnClickListener() {
+        live.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+        live.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 if (!isGoogleAuth) {
@@ -227,15 +251,17 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initCameraWidgets() {
 
+        // Widgets
+        Button cameraNFCReader = (Button) findViewById(R.id.cameraNFCReader);
         View popupView = getLayoutInflater().inflate(R.layout.popupwindow_nfc, null);
 
+        // Popup Window
         nfcPopupWindow = new PopupWindow(popupView);
         nfcPopupWindow.setTouchable(true);
         nfcPopupWindow.setOutsideTouchable(true);
 //        nfcPopupWindow.setBackgroundDrawable(new BitmapDrawable(getResources(), (Bitmap) null));
 
         // Reader
-        cameraNFCReader = (Button) findViewById(R.id.cameraNFCReader);
         cameraNFCReader.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
@@ -281,8 +307,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i("AoA-CameraView", "Set Adapter");
 
-        cameraListAdapter = new ListAdapter();
-        cameraList.setAdapter(cameraListAdapter);
+        cameraList.setAdapter(new ListAdapter());
     }
 
     /**
@@ -333,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            remove.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
             remove.setOnClickListener(new View.OnClickListener() {
 
                 @Override

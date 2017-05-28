@@ -3,9 +3,6 @@
     <string name="facebook_app_id">106449389908395</string>
     <string name="fb_login_protocol_scheme">fb106449389908395</string>
 
-    <string name="live_now">Live!</string>
-    <string name="remove_camera">Remove</string>
-
     <string name="start">Start</string>
     <string name="stop">Stop</string>
 
@@ -14,4 +11,9 @@
     <string name="sns_list">Social Networks</string>
     <string name="sns_fb_auth">Facebook</string>
     <string name="sns_google_auth">Google</string>
+
+    <string name="icon_start">&#xf00d;</string>
+    <string name="icon_stop">&#xf04d;</string>
+    <string name="icon_camera">&#xf03d;</string>
+    <string name="icon_remove">&#xf00d;</string>
 </resources>

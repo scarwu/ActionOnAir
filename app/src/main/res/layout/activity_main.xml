@@ -41,22 +41,23 @@
             <Button
                 android:id="@+id/snsFBAuth"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
                 android:layout_toLeftOf="@+id/snsFBLive"
                 android:layout_weight="1"
-                android:text="@string/sns_fb_auth" />
+                android:text="@string/sns_fb_auth"
+                android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/snsFBLive"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/live_now"
-                android:layout_alignParentTop="true"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
+                android:layout_alignParentTop="true"
+                android:layout_weight="1"
+                android:text="@string/icon_camera" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -68,23 +69,24 @@
             <Button
                 android:id="@+id/snsGoogleAuth"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
                 android:layout_toLeftOf="@+id/snsGoogleLive"
                 android:layout_toStartOf="@+id/snsGoogleLive"
                 android:layout_weight="1"
-                android:text="@string/sns_google_auth" />
+                android:text="@string/sns_google_auth"
+                android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/snsGoogleLive"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/live_now"
-                android:layout_alignParentTop="true"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
+                android:layout_alignParentTop="true"
+                android:layout_weight="1"
+                android:text="@string/icon_camera" />
         </RelativeLayout>
 
     </LinearLayout>
@@ -114,9 +116,10 @@
         <Button
             android:id="@+id/cameraNFCReader"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="60dp"
             android:layout_weight="1"
-            android:text="@string/camera_nfc_reader" />
+            android:text="@string/camera_nfc_reader"
+            android:textAllCaps="false" />
 
         <ListView
             android:id="@+id/cameraList"

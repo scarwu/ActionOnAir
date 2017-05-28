@@ -16,15 +16,16 @@ import android.view.View;
 import android.widget.Button;
 
 // Custom Libs
-import scarwu.actiononair.libs.platform.Facebook;
-import scarwu.actiononair.libs.platform.Google;
+import scarwu.actiononair.libs.DBHelper;
+import scarwu.actiononair.libs.FontManager;
+import scarwu.actiononair.libs.sns.Facebook;
+import scarwu.actiononair.libs.sns.Google;
 import scarwu.actiononair.libs.camera.sony.ActionCam;
 
 public class ControlPanelActivity extends AppCompatActivity {
 
     // Widgets
     private SurfaceView liveView;
-    private Button startAndStop;
 
     // Flags
     private boolean isLive = false;
@@ -71,7 +72,10 @@ public class ControlPanelActivity extends AppCompatActivity {
      */
     private void initWidgets() {
 
-        startAndStop = (Button) findViewById(R.id.startAndStop);
+        final Button startAndStop = (Button) findViewById(R.id.startAndStop);
+
+        startAndStop.setTypeface(FontManager.getTypeface(ControlPanelActivity.this, FontManager.FONTAWESOME));
+        startAndStop.setText("\uf00d");
         startAndStop.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
@@ -83,6 +87,9 @@ public class ControlPanelActivity extends AppCompatActivity {
                     }
 
                     isLive = false;
+
+                    // Set Start Icon
+                    startAndStop.setText("\uf00d");
                 } else {
                     if ("fb".equals(sns)) {
                         snsFB.liveStream.start();
@@ -91,6 +98,9 @@ public class ControlPanelActivity extends AppCompatActivity {
                     }
 
                     isLive = true;
+
+                    // Set Stop Icon
+                    startAndStop.setText("\uf04d");
                 }
             }
         });
