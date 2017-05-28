@@ -3,15 +3,18 @@
     <string name="facebook_app_id">106449389908395</string>
     <string name="fb_login_protocol_scheme">fb106449389908395</string>
 
-    <string name="start">Start</string>
-    <string name="stop">Stop</string>
-
     <string name="camera_list">Cameras</string>
-    <string name="camera_nfc_reader">NFC</string>
     <string name="sns_list">Social Networks</string>
     <string name="sns_fb_auth">Facebook</string>
     <string name="sns_google_auth">Google</string>
 
+    <string name="icon_facebook">&#xf09a;</string>
+    <string name="icon_google">&#xf1a0;</string>
+    <string name="icon_twich">&#xf1e8;</string>
+    <string name="icon_link">&#xf0c1;</string>
+    <string name="icon_unlink">&#xf127;</string>
+    <string name="icon_connect">&#xf111;</string>
+    <string name="icon_disconnect">&#xf10c;</string>
     <string name="icon_start">&#xf00d;</string>
     <string name="icon_stop">&#xf04d;</string>
     <string name="icon_camera">&#xf03d;</string>

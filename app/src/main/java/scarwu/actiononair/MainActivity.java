@@ -29,7 +29,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import android.nfc.NfcAdapter;
@@ -49,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
 
     // Widgets
     private ListView cameraList;
-    private PopupWindow nfcPopupWindow;
 
     // Flags
     private boolean isFBAuth = false;
@@ -175,10 +173,15 @@ public class MainActivity extends AppCompatActivity {
     private void initSNSFacebookWidgets() {
 
         // Widgets
+        Button status = (Button) findViewById(R.id.snsFBStatus);
         Button auth = (Button) findViewById(R.id.snsFBAuth);
         Button live = (Button) findViewById(R.id.snsFBLive);
 
+        // Status
+        status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+
         // Auth
+        auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
@@ -214,10 +217,15 @@ public class MainActivity extends AppCompatActivity {
     private void initSNSGoogleWidgets() {
 
         // Widgets
+        Button status = (Button) findViewById(R.id.snsGoogleStatus);
         Button auth = (Button) findViewById(R.id.snsGoogleAuth);
         Button live = (Button) findViewById(R.id.snsGoogleLive);
 
+        // Status
+        status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+
         // Auth
+        auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
@@ -250,24 +258,6 @@ public class MainActivity extends AppCompatActivity {
      * Init Camera Widgets
      */
     private void initCameraWidgets() {
-
-        // Widgets
-        Button cameraNFCReader = (Button) findViewById(R.id.cameraNFCReader);
-        View popupView = getLayoutInflater().inflate(R.layout.popupwindow_nfc, null);
-
-        // Popup Window
-        nfcPopupWindow = new PopupWindow(popupView);
-        nfcPopupWindow.setTouchable(true);
-        nfcPopupWindow.setOutsideTouchable(true);
-//        nfcPopupWindow.setBackgroundDrawable(new BitmapDrawable(getResources(), (Bitmap) null));
-
-        // Reader
-        cameraNFCReader.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View view) {
-                nfcPopupWindow.showAsDropDown(view);
-            }
-        });
 
         // List
         cameraList = (ListView) findViewById(R.id.cameraList);
@@ -334,9 +324,15 @@ public class MainActivity extends AppCompatActivity {
         public View getView(final int listItem, View listView, ViewGroup arg2) {
             listView = getLayoutInflater().inflate(R.layout.item_camera, null);
 
+            // Widgets
+            Button status = (Button) listView.findViewById(R.id.cameraStatus);
             Button ssid = (Button) listView.findViewById(R.id.cameraSSID);
             Button remove = (Button) listView.findViewById(R.id.removeCamera);
 
+            // Status
+            status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+
+            // SSID
             ssid.setText(cameraSSIDArray[listItem]);
             ssid.setOnClickListener(new View.OnClickListener() {
 
@@ -358,6 +354,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            // Remove
             remove.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
             remove.setOnClickListener(new View.OnClickListener() {
 
