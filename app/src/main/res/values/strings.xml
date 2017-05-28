@@ -4,6 +4,7 @@
     <string name="fb_login_protocol_scheme">fb106449389908395</string>
 
     <string name="live_now">Live!</string>
+    <string name="remove_camera">Remove</string>
 
     <string name="camera_list">Cameras</string>
     <string name="camera_nfc_reader">NFC</string>

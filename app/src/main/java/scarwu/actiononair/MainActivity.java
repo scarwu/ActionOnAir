@@ -9,47 +9,35 @@
 
 package scarwu.actiononair;
 
-import android.nfc.FormatException;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.app.Fragment;
 import android.app.PendingIntent;
 import android.view.View;
 import android.util.Log;
+import android.database.Cursor;
 
+// Widgets
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.nfc.NdefMessage;
-import android.nfc.NdefRecord;
-import android.nfc.tech.NfcA;
-import android.nfc.tech.NfcB;
-import android.nfc.tech.NfcF;
-import android.nfc.tech.NfcV;
-import android.nfc.tech.Ndef;
-import android.nfc.tech.NdefFormatable;
-import android.nfc.tech.MifareClassic;
-import android.nfc.tech.MifareUltralight;
-import android.nfc.tech.IsoDep;
 
 // Custom Libs
-import java.io.IOException;
-import java.nio.charset.Charset;
-
 import scarwu.actiononair.ControlPanelActivity;
-
 import scarwu.actiononair.libs.platform.facebook.*;
 import scarwu.actiononair.libs.platform.google.*;
 import scarwu.actiononair.libs.camera.sony.ActionCam;
-import scarwu.actiononair.libs.NFCReader;
+import scarwu.actiononair.libs.DBHelper;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -72,7 +60,13 @@ public class MainActivity extends AppCompatActivity {
     private PendingIntent nfcPendingIntent;
     private IntentFilter[] nfcFilters;
 
-    public static final String SONY_MIME_TYPE = "application/x-sony-pmm";
+    // SQLite
+    private DBHelper dbHelper;
+	private Cursor dbCursor;
+
+    private ListAdapter cameraListAdapter;
+    private Integer[] cameraIdArray;
+    private String[] cameraSSIDArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,10 +81,9 @@ public class MainActivity extends AppCompatActivity {
 
         // NFC
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
         nfcPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
 
-        // Action Filter Actions
+        // NFC Action Filter Actions
         IntentFilter nfcIntentFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 
         try {
@@ -102,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
         nfcFilters = new IntentFilter[] {
             nfcIntentFilter
         };
+
+        // DB Helper
+        dbHelper = new DBHelper(this);
     }
 
     @Override
@@ -129,80 +125,20 @@ public class MainActivity extends AppCompatActivity {
         Log.i("NFC", "IntentType: " + type);
 
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
-            && SONY_MIME_TYPE.equals(type)) {
+            && ActionCam.MIME_TYPE.equals(type)) {
 
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
-            Ndef ndef = Ndef.get(tag);
+            String[] setting = ActionCam.resolveTagAndGetWifiSetting(tag);
 
-            try {
-                ndef.connect();
+            if (null != setting) {
 
-                NdefMessage message = ndef.getNdefMessage();
+                // Add Camera
+                dbHelper.addCamera("sony", setting[0], setting[1]);
 
-                Log.i("NFC", "NdefMessage: " + message);
-
-                NdefRecord[] records = message.getRecords();
-
-                for (NdefRecord record: records) {
-                    String recordType = new String(record.getType());
-
-                    Log.i("NFC", "NdefRecordType: " + recordType);
-                    Log.i("NFC", "NdefRecordPayload: " + new String(record.getPayload()));
-
-                    if (SONY_MIME_TYPE.equals(new String(record.getType()))) {
-                        String[] ppm = decodeSonyPPMMessage(record.getPayload());
-
-                        if (null != ppm) {
-                            Log.i("NFC", "WifiSSID: " + ppm[0]);
-                            Log.i("NFC", "WifiPass: " + ppm[1]);
-                        }
-                    }
-                }
-            } catch (FormatException e) {
-                Log.e("NFC", "FormatException", e);
-            } catch (IOException e) {
-                Log.e("NFC", "IOException", e);
-            } finally {
-                if (ndef != null) {
-                    try {
-                        ndef.close();
-                    } catch (IOException e) {
-                        Log.e("NFC", "Error closing tag...", e);
-                    }
-                }
+                // Refresh Camera List
+                refreshCameraList();
             }
-        }
-    }
-
-    private static String[] decodeSonyPPMMessage(byte[] payload) {
-
-        try {
-            int ssidBytesStart = 8;
-            int ssidLength = payload[ssidBytesStart];
-
-            byte[] ssidBytes = new byte[ssidLength];
-            int ssidPointer = 0;
-            for (int i=ssidBytesStart+1; i<=ssidBytesStart+ssidLength; i++) {
-                ssidBytes[ssidPointer++] = payload[i];
-            }
-            String ssid = new String(ssidBytes);
-
-            int passwordBytesStart = ssidBytesStart+ssidLength+4;
-            int passwordLength = payload[passwordBytesStart];
-
-            byte[] passwordBytes = new byte[passwordLength];
-
-            int passwordPointer = 0;
-            for (int i=passwordBytesStart+1; i<=passwordBytesStart+passwordLength; i++) {
-                passwordBytes[passwordPointer++] = payload[i];
-            }
-            String password = new String(passwordBytes);
-
-            return new String[] {ssid, password};
-
-        } catch(Exception e) {
-            return null;
         }
     }
 
@@ -299,6 +235,87 @@ public class MainActivity extends AppCompatActivity {
 
         // List
         cameraList = (ListView) findViewById(R.id.cameraList);
+
+        // Refresh Camera List
+        refreshCameraList();
+    }
+
+    /**
+     * Refresh Camera List
+     */
+    private void refreshCameraList() {
+        dbCursor = dbHelper.readCameras();
+
+        ArrayList<Integer> cameraIdList = new ArrayList<Integer>();
+        ArrayList<String> cameraSSIDList = new ArrayList<String>();
+
+        do {
+            cameraIdList.add(dbCursor.getInt(dbCursor.getColumnIndex("id")));
+            cameraSSIDList.add(dbCursor.getString(dbCursor.getColumnIndex("ssid")));
+            dbCursor.moveToNext();
+        } while (!dbCursor.isLast());
+
+        cameraIdArray = (Integer[]) cameraIdList.toArray(new Integer[cameraIdList.size()]);
+        cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
+
+        cameraListAdapter = new ListAdapter();
+        cameraList.setAdapter(cameraListAdapter);
+    }
+
+    private class ListAdapter extends BaseAdapter {
+
+//      private HashMap<String, Boolean> tmpList = new HashMap<String, Boolean>();
+
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return cameraIdArray.length;
+        }
+
+        @Override
+        public Object getItem(int arg0) {
+            // TODO Auto-generated method stub
+            return arg0;
+        }
+
+        @Override
+        public long getItemId(int arg0) {
+            // TODO Auto-generated method stub
+            return arg0;
+        }
+
+        @Override
+        public View getView(final int listItem, View listView, ViewGroup arg2) {
+
+            // TODO Auto-generated method stub
+            listView = getLayoutInflater().inflate(R.layout.item_camera, null);
+
+            Button ssid = (Button) listView.findViewById(R.id.cameraSSID);
+            Button remove = (Button) listView.findViewById(R.id.removeCamera);
+
+            ssid.setText(cameraSSIDArray[listItem]);
+            ssid.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View arg0) {
+
+                    // TODO Auto-generated method stub
+//                    callSkype(phoneArray[listItem]);
+                }
+            });
+
+            remove.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View arg0) {
+
+                    // TODO Auto-generated method stub
+                    dbHelper.removeCamera(cameraIdArray[listItem]);
+                }
+            });
+
+            return listView;
+        }
     }
 
     /**
