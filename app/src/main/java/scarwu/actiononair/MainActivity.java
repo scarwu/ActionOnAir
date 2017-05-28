@@ -9,6 +9,8 @@
 
 package scarwu.actiononair;
 
+import android.nfc.FormatException;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
@@ -39,6 +41,9 @@ import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.IsoDep;
 
 // Custom Libs
+import java.io.IOException;
+import java.nio.charset.Charset;
+
 import scarwu.actiononair.ControlPanelActivity;
 
 import scarwu.actiononair.libs.platform.facebook.*;
@@ -66,7 +71,8 @@ public class MainActivity extends AppCompatActivity {
     private NfcAdapter nfcAdapter;
     private PendingIntent nfcPendingIntent;
     private IntentFilter[] nfcFilters;
-    private String[][] nfcTechLists;
+
+    public static final String SONY_MIME_TYPE = "application/x-sony-pmm";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,23 +89,18 @@ public class MainActivity extends AppCompatActivity {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
         nfcPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-        IntentFilter ndef = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+
+        // Action Filter Actions
+        IntentFilter nfcIntentFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 
         try {
-            ndef.addDataType("*/*");
+            nfcIntentFilter.addDataType("*/*");
         } catch (IntentFilter.MalformedMimeTypeException e) {
-            throw new RuntimeException("fail", e);
+            throw new RuntimeException("addDataTypeFail", e);
         }
 
-        IntentFilter[] nfcFilters = new IntentFilter[] {
-            ndef
-        };
-
-        // Setup a tech list for all NfcF tags
-        String[][] nfcTechLists = new String[][] {
-            new String[] {
-                MifareClassic.class.getName()
-            }
+        nfcFilters = new IntentFilter[] {
+            nfcIntentFilter
         };
     }
 
@@ -114,42 +115,95 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        nfcAdapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilters, nfcTechLists);
+        nfcAdapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilters, null);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         Log.i("NFC", "Intent: " + intent);
 
-        // Get Action from Intent
         String action = intent.getAction();
+        String type = intent.getType();
 
-        Log.i("NFC", "Action: " + action);
+        Log.i("NFC", "IntentAction: " + action);
+        Log.i("NFC", "IntentType: " + type);
 
-        //  3) Get an instance of the TAG from the NfcAdapter
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
-            Log.i("NFC", "Action: " + NfcAdapter.ACTION_NDEF_DISCOVERED);
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
+            && SONY_MIME_TYPE.equals(type)) {
 
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
-            byte[] id = tag.getId();
+            Ndef ndef = Ndef.get(tag);
 
             try {
-                Log.i("NFC", "ID: " + getHexString(id));
-            } catch (Exception e) {
-                e.printStackTrace();
+                ndef.connect();
+
+                NdefMessage message = ndef.getNdefMessage();
+
+                Log.i("NFC", "NdefMessage: " + message);
+
+                NdefRecord[] records = message.getRecords();
+
+                for (NdefRecord record: records) {
+                    String recordType = new String(record.getType());
+
+                    Log.i("NFC", "NdefRecordType: " + recordType);
+                    Log.i("NFC", "NdefRecordPayload: " + new String(record.getPayload()));
+
+                    if (SONY_MIME_TYPE.equals(new String(record.getType()))) {
+                        String[] ppm = decodeSonyPPMMessage(record.getPayload());
+
+                        if (null != ppm) {
+                            Log.i("NFC", "WifiSSID: " + ppm[0]);
+                            Log.i("NFC", "WifiPass: " + ppm[1]);
+                        }
+                    }
+                }
+            } catch (FormatException e) {
+                Log.e("NFC", "FormatException", e);
+            } catch (IOException e) {
+                Log.e("NFC", "IOException", e);
+            } finally {
+                if (ndef != null) {
+                    try {
+                        ndef.close();
+                    } catch (IOException e) {
+                        Log.e("NFC", "Error closing tag...", e);
+                    }
+                }
             }
         }
     }
 
-    private static String getHexString(byte[] b) throws Exception {
-        String result = "";
+    private static String[] decodeSonyPPMMessage(byte[] payload) {
 
-        for (int i=0; i < b.length; i++) {
-            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring(1);
+        try {
+            int ssidBytesStart = 8;
+            int ssidLength = payload[ssidBytesStart];
+
+            byte[] ssidBytes = new byte[ssidLength];
+            int ssidPointer = 0;
+            for (int i=ssidBytesStart+1; i<=ssidBytesStart+ssidLength; i++) {
+                ssidBytes[ssidPointer++] = payload[i];
+            }
+            String ssid = new String(ssidBytes);
+
+            int passwordBytesStart = ssidBytesStart+ssidLength+4;
+            int passwordLength = payload[passwordBytesStart];
+
+            byte[] passwordBytes = new byte[passwordLength];
+
+            int passwordPointer = 0;
+            for (int i=passwordBytesStart+1; i<=passwordBytesStart+passwordLength; i++) {
+                passwordBytes[passwordPointer++] = payload[i];
+            }
+            String password = new String(passwordBytes);
+
+            return new String[] {ssid, password};
+
+        } catch(Exception e) {
+            return null;
         }
-
-        return result;
     }
 
     /**
