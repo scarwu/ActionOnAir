@@ -1,5 +1,5 @@
 /**
- * Google - Live Stream
+ * Facebook - Account
  *
  * @package     Action on Air
  * @author      ScarWu
@@ -7,9 +7,10 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.platform.google;
+package scarwu.actiononair.libs.platform;
 
 import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -28,18 +29,54 @@ import java.util.List;
 //import com.google.api.client.json.jackson2.JacksonFactory;
 //import com.google.api.client.util.store.DataStore;
 //import com.google.api.client.util.store.FileDataStoreFactory;
+//import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+//import com.google.api.client.util.DateTime;
+//import com.google.api.services.samples.youtube.cmdline.Auth;
+//import com.google.api.services.youtube.YouTube;
+//import com.google.api.services.youtube.model.*;
+//import com.google.common.collect.Lists;
 
-public class Account {
+public class Google {
 
-    public Account() {
+    public Account account;
+    public LiveStream liveStream;
 
+    public Google() {
+
+//        FacebookSdk.sdkInitialize(getApplicationContext());
+//        AppEventsLogger.activateApp(this);
+
+        account = new Account();
+        liveStream = new LiveStream();
     }
 
-    public void connect() {
+    public class Account {
 
+        public Account() {
+
+        }
+
+        public void connect() {
+
+        }
+
+        public void disconnect() {
+
+        }
     }
 
-    public void disconnect() {
+    public class LiveStream {
 
+        public LiveStream() {
+
+        }
+
+        public void start() {
+
+        }
+
+        public void stop() {
+
+        }
     }
 }

@@ -6,6 +6,9 @@
     <string name="live_now">Live!</string>
     <string name="remove_camera">Remove</string>
 
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+
     <string name="camera_list">Cameras</string>
     <string name="camera_nfc_reader">NFC</string>
     <string name="sns_list">Social Networks</string>

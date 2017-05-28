@@ -16,7 +16,7 @@
         android:orientation="vertical">
 
         <SurfaceView
-            android:id="@+id/surfaceView2"
+            android:id="@+id/liveView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -25,15 +25,15 @@
             android:layout_height="match_parent">
 
             <Button
-                android:id="@+id/button2"
+                android:id="@+id/startAndStop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                android:text="Button"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
+                android:text="@string/start" />
         </RelativeLayout>
     </LinearLayout>
 

@@ -11,18 +11,91 @@ package scarwu.actiononair;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
 
 // Custom Libs
-import scarwu.actiononair.libs.platform.facebook.*;
-import scarwu.actiononair.libs.platform.google.*;
+import scarwu.actiononair.libs.platform.Facebook;
+import scarwu.actiononair.libs.platform.Google;
 import scarwu.actiononair.libs.camera.sony.ActionCam;
 
 public class ControlPanelActivity extends AppCompatActivity {
+
+    // Widgets
+    private SurfaceView liveView;
+    private Button startAndStop;
+
+    // Flags
+    private boolean isLive = false;
+    private String sns = null;
+    private String provider = null;
+
+    private Facebook snsFB;
+    private Google snsGoogle;
+
+    private ActionCam actionCam;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_control_panel);
+
+        // Get Intent Extra
+        sns = getIntent().getExtras().getString("sns");
+        provider = getIntent().getExtras().getString("provider");
+
+        // Social Network
+        if ("fb".equals(sns)) {
+            snsFB = new Facebook();
+        } else if ("google".equals(sns)) {
+            snsGoogle = new Google();
+        } else {
+            finish();
+        }
+
+        // Camera
+        if ("sony".equals(sns)) {
+            actionCam = new ActionCam();
+        } else {
+            finish();
+        }
+
+        // Initialize Widgets
+        initWidgets();
+    }
+
+    /**
+     * Init Widgets
+     */
+    private void initWidgets() {
+
+        startAndStop = (Button) findViewById(R.id.startAndStop);
+        startAndStop.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View view) {
+                if (isLive) {
+                    if ("fb".equals(sns)) {
+                        snsFB.liveStream.stop();
+                    } else if ("google".equals(sns)) {
+                        snsGoogle.liveStream.stop();
+                    }
+
+                    isLive = false;
+                } else {
+                    if ("fb".equals(sns)) {
+                        snsFB.liveStream.start();
+                    } else if ("google".equals(sns)) {
+                        snsGoogle.liveStream.start();
+                    }
+
+                    isLive = true;
+                }
+            }
+        });
+
+        // Live View
+        liveView = (SurfaceView) findViewById(R.id.liveView);
     }
 }

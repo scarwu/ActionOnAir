@@ -34,8 +34,8 @@ import android.nfc.Tag;
 
 // Custom Libs
 import scarwu.actiononair.ControlPanelActivity;
-import scarwu.actiononair.libs.platform.facebook.*;
-import scarwu.actiononair.libs.platform.google.*;
+import scarwu.actiononair.libs.platform.Facebook;
+import scarwu.actiononair.libs.platform.Google;
 import scarwu.actiononair.libs.camera.sony.ActionCam;
 import scarwu.actiononair.libs.DBHelper;
 
@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     // Flags
     private boolean isFBAuth = false;
     private boolean isGoogleAuth = false;
+    private String cameraProvider = null;
 
     // Wifi
     WifiManager wifiManager;
@@ -83,11 +84,6 @@ public class MainActivity extends AppCompatActivity {
         // DB Helper
         dbHelper = new DBHelper(this);
 
-        // Initailize View Widgets
-        initSNSFacebookWidgets();
-        initSNSGoogleWidgets();
-        initCameraWidgets();
-
         // Wifi
         wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -107,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
         nfcFilters = new IntentFilter[] {
             nfcIntentFilter
         };
+
+        // Initialize View Widgets
+        initSNSFacebookWidgets();
+        initSNSGoogleWidgets();
+        initCameraWidgets();
     }
 
     @Override
@@ -162,9 +163,9 @@ public class MainActivity extends AppCompatActivity {
 
             public void onClick(View view) {
                 if (isFBAuth) {
-                    // disconnect
+                    new Facebook().account.disconnect();
                 } else {
-                    // connect
+                    new Facebook().account.connect();
                 }
             }
         });
@@ -197,9 +198,9 @@ public class MainActivity extends AppCompatActivity {
 
             public void onClick(View view) {
                 if (isGoogleAuth) {
-                    // disconnect
+                    new Google().account.disconnect();
                 } else {
-                    // connect
+                    new Google().account.connect();
                 }
             }
         });
@@ -254,14 +255,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private void refreshCameraList() {
 
-        try {
-            dbCursor = dbHelper.readCameras();
-        } catch (NullPointerException e) {
-            return;
-        }
-
         ArrayList<Integer> cameraIdList = new ArrayList<Integer>();
         ArrayList<String> cameraSSIDList = new ArrayList<String>();
+
+        dbCursor = dbHelper.readCameras();
 
         if (0 != dbCursor.getCount()) {
             dbCursor.moveToFirst();
@@ -283,34 +280,33 @@ public class MainActivity extends AppCompatActivity {
         cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
 
         Log.i("AoA-CameraView", "Set Adapter");
+
         cameraListAdapter = new ListAdapter();
         cameraList.setAdapter(cameraListAdapter);
     }
 
+    /**
+     * List Adapter for Camera List
+     */
     private class ListAdapter extends BaseAdapter {
 
         @Override
         public int getCount() {
-            // TODO Auto-generated method stub
             return cameraIdArray.length;
         }
 
         @Override
         public Object getItem(int arg0) {
-            // TODO Auto-generated method stub
             return arg0;
         }
 
         @Override
         public long getItemId(int arg0) {
-            // TODO Auto-generated method stub
             return arg0;
         }
 
         @Override
         public View getView(final int listItem, View listView, ViewGroup arg2) {
-
-            // TODO Auto-generated method stub
             listView = getLayoutInflater().inflate(R.layout.item_camera, null);
 
             Button ssid = (Button) listView.findViewById(R.id.cameraSSID);
@@ -321,8 +317,6 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onClick(View arg0) {
-
-                    // TODO Auto-generated method stub
                     dbCursor = dbHelper.getCamera(cameraIdArray[listItem]);
 
                     if (0 != dbCursor.getCount()) {
@@ -343,8 +337,6 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onClick(View arg0) {
-
-                    // TODO Auto-generated method stub
                     dbHelper.removeCamera(cameraIdArray[listItem]);
 
                     // Refresh Camera List
@@ -414,8 +406,13 @@ public class MainActivity extends AppCompatActivity {
      * Go to ControlPanel Page
      */
     private void goToControlPanelPage(String sns) {
+        if (null == cameraProvider) {
+            return;
+        }
+
         Intent intent = new Intent();
         intent.putExtra("sns" , sns);
+        intent.putExtra("provider" , cameraProvider);
         intent.setClass(MainActivity.this , ControlPanelActivity.class);
 
         startActivity(intent);
