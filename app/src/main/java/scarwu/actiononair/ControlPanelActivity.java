@@ -32,7 +32,7 @@ public class ControlPanelActivity extends AppCompatActivity {
     private String sns = null;
     private String provider = null;
 
-    private Facebook snsFB;
+    private Facebook snsFacebook;
     private Google snsGoogle;
 
     private SonyActionCam sonyActionCam;
@@ -48,8 +48,8 @@ public class ControlPanelActivity extends AppCompatActivity {
         provider = getIntent().getExtras().getString("provider");
 
         // Social Network
-        if ("fb".equals(sns)) {
-            snsFB = new Facebook();
+        if ("facebook".equals(sns)) {
+            snsFacebook = new Facebook();
         } else if ("google".equals(sns)) {
             snsGoogle = new Google();
         } else {
@@ -80,8 +80,8 @@ public class ControlPanelActivity extends AppCompatActivity {
 
             public void onClick(View view) {
                 if (isLive) {
-                    if ("fb".equals(sns)) {
-                        snsFB.liveStream.stop();
+                    if ("facebook".equals(sns)) {
+                        snsFacebook.liveStream.stop();
                     } else if ("google".equals(sns)) {
                         snsGoogle.liveStream.stop();
                     }
@@ -91,8 +91,8 @@ public class ControlPanelActivity extends AppCompatActivity {
                     // Set Start Icon
                     startAndStop.setText("\uf00d");
                 } else {
-                    if ("fb".equals(sns)) {
-                        snsFB.liveStream.start();
+                    if ("facebook".equals(sns)) {
+                        snsFacebook.liveStream.start();
                     } else if ("google".equals(sns)) {
                         snsGoogle.liveStream.start();
                     }

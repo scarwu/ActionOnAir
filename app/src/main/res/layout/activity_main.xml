@@ -36,6 +36,15 @@
             android:textAlignment="textStart"
             android:textColor="#fff" />
 
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/login_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="30dp"
+            android:layout_marginTop="30dp"
+            android:layout_weight="1" />
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -45,12 +54,12 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_alignBottom="@+id/snsFBLive"
-                android:layout_toLeftOf="@+id/snsFBLive"
-                android:layout_toStartOf="@+id/snsFBLive">
+                android:layout_alignBottom="@+id/snsFacebookLive"
+                android:layout_toLeftOf="@+id/snsFacebookLive"
+                android:layout_toStartOf="@+id/snsFacebookLive">
 
                 <Button
-                    android:id="@+id/snsFBStatus"
+                    android:id="@+id/snsFacebookStatus"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_alignParentLeft="true"
@@ -60,13 +69,13 @@
                     android:text="@string/icon_unlink" />
 
                 <Button
-                    android:id="@+id/snsFBAuth"
+                    android:id="@+id/snsFacebookAuth"
                     android:layout_width="wrap_content"
                     android:layout_height="60dp"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentRight="true"
                     android:layout_alignParentTop="true"
-                    android:layout_toRightOf="@+id/snsFBStatus"
+                    android:layout_toRightOf="@+id/snsFacebookStatus"
                     android:layout_weight="1"
                     android:text="@string/icon_facebook"
                     android:textAllCaps="false"
@@ -74,7 +83,7 @@
             </RelativeLayout>
 
             <Button
-                android:id="@+id/snsFBLive"
+                android:id="@+id/snsFacebookLive"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_alignParentEnd="true"

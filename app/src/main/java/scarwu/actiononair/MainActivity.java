@@ -12,21 +12,18 @@ package scarwu.actiononair;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
-import android.app.PendingIntent;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.util.Log;
 import android.database.Cursor;
+import android.util.Log;
 
 // Widgets
 import android.widget.BaseAdapter;
@@ -34,6 +31,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+// Devices
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiInfo;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 
@@ -44,8 +45,16 @@ import scarwu.actiononair.libs.sns.Facebook;
 import scarwu.actiononair.libs.sns.Google;
 import scarwu.actiononair.libs.camera.SonyActionCam;
 
+// 3rd-party Libs
+import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.CallbackManager;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,9 +62,12 @@ public class MainActivity extends AppCompatActivity {
     private ListView cameraList;
 
     // Flags
-    private boolean isFBAuth = false;
+    private boolean isFacebookAuth = false;
     private boolean isGoogleAuth = false;
     private String cameraProvider = null;
+
+    private LoginButton loginButton;
+    private CallbackManager callbackManager;
 
     // Wifi
     WifiManager wifiManager;
@@ -81,15 +93,15 @@ public class MainActivity extends AppCompatActivity {
         // DB Helper
         dbHelper = new DBHelper(this);
 
-        // Devices
+        // Init Devices
         initWifiDevice();
         initNFCDevice();
 
-        // SNS
+        // Init SNS
         initSNSFacebook();
         initSNSGoogle();
 
-        // Initialize View Widgets
+        // Init Widgets
         initSNSFacebookWidgets();
         initSNSGoogleWidgets();
         initCameraWidgets();
@@ -177,6 +189,52 @@ public class MainActivity extends AppCompatActivity {
         FacebookSdk.sdkInitialize(getApplicationContext());
         AppEventsLogger.activateApp(this);
 
+        callbackManager = CallbackManager.Factory.create();
+
+        loginButton = (LoginButton) findViewById(R.id.login_button);
+        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                AccessToken accessToken = loginResult.getAccessToken();
+
+                String applicationId = accessToken.getApplicationId();
+                String userId = accessToken.getUserId();
+                String token = accessToken.getToken();
+
+                Log.i("AoA-Facebook", "Success");
+                Log.i("AoA-Facebook", "ApplicationId: " + applicationId);
+                Log.i("AoA-Facebook", "UserId: " + userId);
+                Log.i("AoA-Facebook", "Token: " + token);
+
+                dbHelper.addSNSItem("facebook", token);
+
+                // Refresh Facebook Widget
+                initSNSFacebookWidgets();
+            }
+
+            @Override
+            public void onCancel() {
+                Log.i("AoA-Facebook", "Cancel");
+
+                dbHelper.addSNSItem("facebook", "");
+
+                // Refresh Facebook Widget
+                initSNSFacebookWidgets();
+            }
+
+            @Override
+            public void onError(FacebookException exception) {
+                Log.i("AoA-Facebook", "Error");
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        callbackManager.onActivityResult(requestCode, resultCode, data);
     }
 
     /**
@@ -234,12 +292,26 @@ public class MainActivity extends AppCompatActivity {
     private void initSNSFacebookWidgets() {
 
         // Widgets
-        Button status = (Button) findViewById(R.id.snsFBStatus);
-        Button auth = (Button) findViewById(R.id.snsFBAuth);
-        Button live = (Button) findViewById(R.id.snsFBLive);
+        Button status = (Button) findViewById(R.id.snsFacebookStatus);
+        Button auth = (Button) findViewById(R.id.snsFacebookAuth);
+        Button live = (Button) findViewById(R.id.snsFacebookLive);
 
         // Status
         status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+
+        dbCursor = dbHelper.getSNSItem("facebook");
+
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            if (!token.equals("")) {
+                status.setText(R.string.icon_link);
+            } else {
+                status.setText(R.string.icon_unlink);
+            }
+        }
 
         // Auth
         auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
@@ -247,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
 
             public void onClick(View view) {
 
-                if (isFBAuth) {
+                if (isFacebookAuth) {
                     new Facebook().account.disconnect();
                 } else {
                     new Facebook().account.connect();
@@ -260,14 +332,14 @@ public class MainActivity extends AppCompatActivity {
         live.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                if (!isFBAuth) {
+                if (!isFacebookAuth) {
                     Toast.makeText(view.getContext(), "Please Connect Your Facebook Account", Toast.LENGTH_SHORT).show();
 
                     return;
                 }
 
                 // Switch Page
-                goToControlPanelPage("fb");
+                goToControlPanelPage("facebook");
             }
         });
     }
@@ -284,6 +356,20 @@ public class MainActivity extends AppCompatActivity {
 
         // Status
         status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+
+        dbCursor = dbHelper.getSNSItem("google");
+
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            if (!token.equals("")) {
+                status.setText(R.string.icon_link);
+            } else {
+                status.setText(R.string.icon_unlink);
+            }
+        }
 
         // Auth
         auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
