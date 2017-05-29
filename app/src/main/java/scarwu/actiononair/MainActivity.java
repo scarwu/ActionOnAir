@@ -61,8 +61,13 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.OptionalPendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.common.api.Status;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,11 +80,15 @@ public class MainActivity extends AppCompatActivity {
     private String cameraProvider = null;
 
     // Facebook
-    private LoginButton loginButton;
+    private Button snsFacebookStatus;
+    private LoginButton facebookLoginButton;
     private CallbackManager callbackManager;
 
     // Google
+    private Button snsGoogleStatus;
+    private SignInButton googleLoginButton;
     private GoogleApiClient googleApiClient;
+    private static final String GOOGLE_CLIENT_ID = "156988006491-umvot01al8ic6p99nqd7qn4rqguspcg5.apps.googleusercontent.com";
     private static final int GOOGLE_SIGN_IN = 9001;
 
     // Wifi
@@ -205,8 +214,8 @@ public class MainActivity extends AppCompatActivity {
 
         callbackManager = CallbackManager.Factory.create();
 
-        loginButton = (LoginButton) findViewById(R.id.login_button);
-        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        facebookLoginButton = (LoginButton) findViewById(R.id.login_button);
+        facebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
             @Override
             public void onSuccess(LoginResult loginResult) {
@@ -216,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
                 String userId = accessToken.getUserId();
                 String token = accessToken.getToken();
 
-                Log.i("AoA-Facebook", "Login");
+                Log.i("AoA-Facebook", "LoginSuccess");
                 Log.i("AoA-Facebook", "ApplicationId: " + applicationId);
                 Log.i("AoA-Facebook", "UserId: " + userId);
                 Log.i("AoA-Facebook", "Token: " + token);
@@ -224,18 +233,18 @@ public class MainActivity extends AppCompatActivity {
                 dbHelper.removeSNSItem("facebook");
                 dbHelper.addSNSItem("facebook", token);
 
-                // Refresh Facebook Widget
-                initSNSFacebookWidgets();
+                // Refresh SNS Facebook Status
+                refreshSNSFacebookStatus();
             }
 
             @Override
             public void onCancel() {
-                Log.i("AoA-Facebook", "Cancel");
+                Log.i("AoA-Facebook", "LoginCancel");
             }
 
             @Override
             public void onError(FacebookException exception) {
-                Log.i("AoA-Facebook", "Error");
+                Log.i("AoA-Facebook", "LoginError");
             }
         });
 
@@ -248,8 +257,8 @@ public class MainActivity extends AppCompatActivity {
 
                     dbHelper.removeSNSItem("facebook");
 
-                    // Refresh Facebook Widget
-                    initSNSFacebookWidgets();
+                    // Refresh SNS Facebook Status
+                    refreshSNSFacebookStatus();
                 }
             }
         };
@@ -263,43 +272,44 @@ public class MainActivity extends AppCompatActivity {
     private void initSNSGoogle() {
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+//            .requestScopes(new Scope(Scopes.EMAIL))
+//            .requestServerAuthCode(GOOGLE_CLIENT_ID)
             .requestEmail()
             .build();
 
         googleApiClient = new GoogleApiClient.Builder(this)
-//            .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
             .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
             .build();
-
-        SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
-        signInButton.setSize(SignInButton.SIZE_STANDARD);
-        signInButton.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View view) {
-                Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
-                startActivityForResult(signInIntent, GOOGLE_SIGN_IN);
-            }
-        });
     }
 
-    private void handleSignInResult(GoogleSignInResult result) {
+    /**
+     * Handle Google Sign In Result
+     *
+     * @param result
+     */
+    private void handleGoogleSignInResult(GoogleSignInResult result) {
 
         if (result.isSuccess()) {
 
             GoogleSignInAccount account = result.getSignInAccount();
 
             String id = account.getId();
-            String idToken = account.getIdToken();
             String serverAuthCode = account.getServerAuthCode();
 
-            Log.i("AoA-Google", "Login");
+            Log.i("AoA-Google", "LoginSuccess");
             Log.i("AoA-Google", "Id: " + id);
-            Log.i("AoA-Google", "IdToken: " + idToken);
-            Log.i("AoA-Google", "Token: " + serverAuthCode);
+            Log.i("AoA-Google", "ServerAuthCode: " + serverAuthCode);
+
+            dbHelper.removeSNSItem("google");
+            dbHelper.addSNSItem("google", id);
+
+            // Refresh SNS Google Status
+            refreshSNSGoogleStatus();
         } else {
-            Log.i("AoA-Google", "Logout");
+            int code = result.getStatus().getStatusCode();
 
-
+            Log.i("AoA-Google", "LoginFail");
+            Log.i("AoA-Google", "Code: " + code);
         }
     }
 
@@ -312,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == GOOGLE_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
+            handleGoogleSignInResult(result);
         } else {
             callbackManager.onActivityResult(requestCode, resultCode, data);
         }
@@ -361,10 +371,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Init SNS Facebook Widgets
+     * Refresh SNS Facebook Status
      */
-    private void initSNSFacebookWidgets() {
-
+    private void refreshSNSFacebookStatus() {
         dbCursor = dbHelper.getSNSItem("facebook");
 
         if (0 != dbCursor.getCount()) {
@@ -377,26 +386,32 @@ public class MainActivity extends AppCompatActivity {
             isFacebookAuth = false;
         }
 
+        if (isFacebookAuth) {
+            snsFacebookStatus.setText(R.string.icon_link);
+        } else {
+            snsFacebookStatus.setText(R.string.icon_unlink);
+        }
+    }
+
+    /**
+     * Init SNS Facebook Widgets
+     */
+    private void initSNSFacebookWidgets() {
+
         // Widgets
-        Button status = (Button) findViewById(R.id.snsFacebookStatus);
         Button auth = (Button) findViewById(R.id.snsFacebookAuth);
         Button live = (Button) findViewById(R.id.snsFacebookLive);
 
         // Status
-        status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-
-        if (isFacebookAuth) {
-            status.setText(R.string.icon_link);
-        } else {
-            status.setText(R.string.icon_unlink);
-        }
+        snsFacebookStatus = (Button) findViewById(R.id.snsFacebookStatus);
+        snsFacebookStatus.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
 
         // Auth
         auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                loginButton.callOnClick();
+                facebookLoginButton.callOnClick();
             }
         });
 
@@ -415,13 +430,15 @@ public class MainActivity extends AppCompatActivity {
                 goToControlPanelPage("facebook");
             }
         });
+
+        // Refresh SNS Google Status
+        refreshSNSFacebookStatus();
     }
 
     /**
-     * Init SNS Google Widgets
+     * Refresh SNS Google Status
      */
-    private void initSNSGoogleWidgets() {
-
+    private void refreshSNSGoogleStatus() {
         dbCursor = dbHelper.getSNSItem("google");
 
         if (0 != dbCursor.getCount()) {
@@ -434,30 +451,59 @@ public class MainActivity extends AppCompatActivity {
             isGoogleAuth = false;
         }
 
+        if (isGoogleAuth) {
+            snsGoogleStatus.setText(R.string.icon_link);
+        } else {
+            snsGoogleStatus.setText(R.string.icon_unlink);
+        }
+    }
+
+    /**
+     * Init SNS Google Widgets
+     */
+    private void initSNSGoogleWidgets() {
+
         // Widgets
-        Button status = (Button) findViewById(R.id.snsGoogleStatus);
         Button auth = (Button) findViewById(R.id.snsGoogleAuth);
         Button live = (Button) findViewById(R.id.snsGoogleLive);
 
         // Status
-        status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-
-        if (isGoogleAuth) {
-            status.setText(R.string.icon_link);
-        } else {
-            status.setText(R.string.icon_unlink);
-        }
+        snsGoogleStatus = (Button) findViewById(R.id.snsGoogleStatus);
+        snsGoogleStatus.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
 
         // Auth
         auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-//                if (isGoogleAuth) {
-//                    new Google().account.disconnect();
-//                } else {
-//                    new Google().account.connect();
-//                }
+
+                Log.i("AoA-Google", "Click");
+
+                if (isGoogleAuth) {
+                    // TODO: Google Logout Error
+//                    Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback(new ResultCallback<Status>() {
+//
+//                        @Override
+//                        public void onResult(Status status) {
+//                            Log.i("AoA-Google", "Logout");
+//
+//                            dbHelper.removeSNSItem("google");
+//
+//                            // Refresh SNS Google Status
+//                            refreshSNSGoogleStatus();
+//                        }
+//                    });
+
+                    Log.i("AoA-Google", "Logout");
+
+                    dbHelper.removeSNSItem("google");
+
+                    // Refresh SNS Google Status
+                    refreshSNSGoogleStatus();
+                } else {
+                    Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
+                    startActivityForResult(signInIntent, GOOGLE_SIGN_IN);
+                }
             }
         });
 
@@ -476,6 +522,9 @@ public class MainActivity extends AppCompatActivity {
                 goToControlPanelPage("google");
             }
         });
+
+        // Refresh SNS Google Status
+        refreshSNSGoogleStatus();
     }
 
     /**
