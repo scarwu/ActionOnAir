@@ -12,6 +12,7 @@ package scarwu.actiononair;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         // Wifi Receiver
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+        intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 
         registerReceiver(new wifiReceiver(), intentFilter);
     }
@@ -119,19 +122,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
+            // Get Status
             String action = intent.getAction();
 
             Log.i("AoA-WifiReceiver", "Action: " + action);
 
-            if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
-                if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)){
-                    WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-                    currentSSID = wifiInfo.getSSID().replace("\"", "");
-                } else {
-                    currentSSID = null;
+            if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                || action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+
+                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                String newSSID = wifiInfo.getSSID().replace("\"", "");
+
+                if (currentSSID.equals(newSSID)) {
+                    return;
                 }
 
-                Log.i("AoA-WifiReceiver", "SSID: " + currentSSID);
+                Log.i("AoA-WifiReceiver", "OldSSID: " + currentSSID);
+                Log.i("AoA-WifiReceiver", "NewSSID: " + newSSID);
+
+                // Assign new SSID
+                currentSSID = newSSID;
 
                 // Refresh Camera List
                 refreshCameraList();
@@ -192,7 +202,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Log.i("AoA-NFC", "Intent: " + intent);
 
         // Get Status
         String action = intent.getAction();

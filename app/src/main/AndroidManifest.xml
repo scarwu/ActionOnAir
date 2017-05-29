@@ -34,6 +34,11 @@
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED"/>
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED"/>
+                <action android:name="android.net.wifi.STATE_CHANGE"/>
+            </intent-filter>
         </activity>
 
         <activity android:name=".ControlPanelActivity">
