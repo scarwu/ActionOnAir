@@ -20,7 +20,7 @@ import scarwu.actiononair.libs.DBHelper;
 import scarwu.actiononair.libs.FontManager;
 import scarwu.actiononair.libs.sns.Facebook;
 import scarwu.actiononair.libs.sns.Google;
-import scarwu.actiononair.libs.camera.sony.ActionCam;
+import scarwu.actiononair.libs.camera.SonyActionCam;
 
 public class ControlPanelActivity extends AppCompatActivity {
 
@@ -35,7 +35,7 @@ public class ControlPanelActivity extends AppCompatActivity {
     private Facebook snsFB;
     private Google snsGoogle;
 
-    private ActionCam actionCam;
+    private SonyActionCam sonyActionCam;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +58,7 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         // Camera
         if ("sony".equals(sns)) {
-            actionCam = new ActionCam();
+            sonyActionCam = new SonyActionCam();
         } else {
             finish();
         }

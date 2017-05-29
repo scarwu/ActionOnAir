@@ -26,11 +26,15 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         Log.i("AoA-SQLite", "Create");
 
-        db.execSQL("CREATE TABLE cameras ("
-            + "id INTEGER primary key autoincrement,"
-            + "provider TEXT,"
-            + "ssid TEXT,"
-            + "pass TEXT)"
+        db.execSQL("CREATE TABLE camera ("
+            + "ssid TEXT primary key,"
+            + "pass TEXT,"
+            + "provider TEXT)"
+        );
+
+        db.execSQL("CREATE TABLE sns ("
+            + "provider TEXT primary key,"
+            + "token TEXT)"
         );
     }
 
@@ -38,77 +42,149 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.i("AoA-SQLite", "upgrade");
 
-        db.execSQL("DROP TABLE IF EXISTS cameras");
+        db.execSQL("DROP TABLE IF EXISTS camera");
+        db.execSQL("DROP TABLE IF EXISTS sns");
 
         onCreate(db);
     }
 
     /**
-     * Read Cameras
+     * Get Camera List
      *
      * @return
      */
-    public Cursor readCameras() {
-        Log.i("AoA-SQLite", "Read Cameras");
+    public Cursor getCameraList() {
+        Log.i("AoA-SQLite", "Get Camera List");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
-        return db.query("cameras", null, null, null, null, null, null);
+        return db.query("camera", null, null, null, null, null, null);
     }
 
     /**
-     * Get Camera
+     * Get Camera Item
+     *
+     * @param ssid
      *
      * @return
      */
-    public Cursor getCamera(int id) {
-        Log.i("AoA-SQLite", "Get Camera");
+    public Cursor getCameraItem(String ssid) {
+        Log.i("AoA-SQLite", "Get Camera Item");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] args = {
-            Integer.toString(id)
+            ssid
         };
 
-        return db.query("cameras", null, "id=?", args, null, null, null);
+        return db.query("camera", null, "ssid=?", args, null, null, null);
     }
 
     /**
-     * Add Camera
+     * Add Camera Item
      *
-     * @param provider
      * @param ssid
      * @param pass
+     * @param provider
      *
      * @return
      */
-    public long addCamera(String provider, String ssid, String pass) {
-        Log.i("AoA-SQLite", "Add Camera");
+    public long addCameraItem(String ssid, String pass, String provider) {
+        Log.i("AoA-SQLite", "Add Camera Item");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cv = new ContentValues();
+        cv.put("ssid", ssid);
+        cv.put("pass", pass);
+        cv.put("provider", provider);
+
+        return db.insert("camera", null, cv);
+    }
+
+    /**
+     * Remove Camera Item
+     *
+     * @param ssid
+     */
+    public void removeCameraItem(String ssid) {
+        Log.i("AoA-SQLite", "Remove Camera Item");
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String[] args = {
+            ssid
+        };
+
+        db.delete("camera", "ssid=?", args);
+    }
+
+    /**
+     * Get SNS List
+     *
+     * @return
+     */
+    public Cursor getSNSList() {
+        Log.i("AoA-SQLite", "Get SNS List");
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.query("sns", null, null, null, null, null, null);
+    }
+
+    /**
+     * Get SNS Item
+     *
+     * @param provider
+     *
+     * @return
+     */
+    public Cursor getSNSItem(String provider) {
+        Log.i("AoA-SQLite", "Get SNS Item");
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] args = {
+            provider
+        };
+
+        return db.query("sns", null, "provider=?", args, null, null, null);
+    }
+
+    /**
+     * Add SNS Item
+     *
+     * @param provider
+     * @param token
+     *
+     * @return
+     */
+    public long addSNSItem(String provider, String token) {
+        Log.i("AoA-SQLite", "Add SNS Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cv = new ContentValues();
         cv.put("provider", provider);
-        cv.put("ssid", ssid);
-        cv.put("pass", pass);
+        cv.put("token", token);
 
-        return db.insert("cameras", null, cv);
+        return db.insert("sns", null, cv);
     }
 
     /**
-     * Remove Camera
+     * Remove SNS Item
      *
-     * @param id
+     * @param provider
      */
-    public void removeCamera(int id) {
-        Log.i("AoA-SQLite", "Remove Camera");
+    public void removeSNSItem(String provider) {
+        Log.i("AoA-SQLite", "Remove SNS Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
         String[] args = {
-            Integer.toString(id)
+            provider
         };
 
-        db.delete("cameras", "id=?", args);
+        db.delete("sns", "provider=?", args);
     }
 }

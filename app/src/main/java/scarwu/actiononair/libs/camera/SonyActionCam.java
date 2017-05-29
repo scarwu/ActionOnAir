@@ -7,7 +7,7 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.camera.sony;
+package scarwu.actiononair.libs.camera;
 
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
@@ -18,11 +18,11 @@ import android.util.Log;
 
 import java.io.IOException;
 
-public class ActionCam {
+public class SonyActionCam {
 
     public static final String MIME_TYPE = "application/x-sony-pmm";
 
-    public ActionCam() {
+    public SonyActionCam() {
 
     }
 
@@ -69,6 +69,8 @@ public class ActionCam {
                     }
                 }
             }
+        } catch (NullPointerException e) {
+            Log.e("NFC", "NullPointerException", e);
         } catch (FormatException e) {
             Log.e("NFC", "FormatException", e);
         } catch (IOException e) {

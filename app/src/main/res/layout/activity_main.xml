@@ -16,6 +16,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
+        android:paddingTop="3dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingBottom="3dp"
         android:background="#666"
         android:orientation="vertical"
         android:layout_marginBottom="10dp"
@@ -65,7 +69,8 @@
                     android:layout_toRightOf="@+id/snsFBStatus"
                     android:layout_weight="1"
                     android:text="@string/icon_facebook"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    android:textSize="24sp" />
             </RelativeLayout>
 
             <Button
@@ -113,7 +118,8 @@
                     android:layout_toRightOf="@+id/snsGoogleStatus"
                     android:layout_weight="1"
                     android:text="@string/icon_google"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    android:textSize="24sp" />
             </RelativeLayout>
 
             <Button
@@ -138,6 +144,10 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/snsBlock"
         android:layout_weight="1"
+        android:paddingTop="3dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingBottom="3dp"
         android:background="#666"
         android:orientation="vertical"
         app:layout_constraintTop_toBottomOf="@+id/snsBlock"

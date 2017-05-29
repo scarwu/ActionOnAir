@@ -12,6 +12,8 @@ package scarwu.actiononair;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.graphics.Color;
+import android.net.wifi.WifiInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
@@ -39,7 +41,7 @@ import scarwu.actiononair.libs.DBHelper;
 import scarwu.actiononair.libs.FontManager;
 import scarwu.actiononair.libs.sns.Facebook;
 import scarwu.actiononair.libs.sns.Google;
-import scarwu.actiononair.libs.camera.sony.ActionCam;
+import scarwu.actiononair.libs.camera.SonyActionCam;
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Wifi
     WifiManager wifiManager;
+    String currentSSID;
 
     // NFC
     private NfcAdapter nfcAdapter;
@@ -66,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
     private DBHelper dbHelper;
 	private Cursor dbCursor;
 
-    private Integer[] cameraIdArray;
     private String[] cameraSSIDArray;
 
     @Override
@@ -78,17 +80,13 @@ public class MainActivity extends AppCompatActivity {
         // DB Helper
         dbHelper = new DBHelper(this);
 
-        // Wifi
+        // Devices
         initWifiDevice();
-
-        // NFC
         initNFCDevice();
 
-        // Facebook
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        AppEventsLogger.activateApp(this);
-
-        // Google
+        // SNS
+        initSNSFacebook();
+        initSNSGoogle();
 
         // Initialize View Widgets
         initSNSFacebookWidgets();
@@ -101,6 +99,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initWifiDevice() {
         wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        // Get Wifi Info
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        currentSSID = wifiInfo.getSSID().replace("\"", "");
     }
 
     /**
@@ -122,6 +124,22 @@ public class MainActivity extends AppCompatActivity {
         nfcFilters = new IntentFilter[] {
             nfcIntentFilter
         };
+    }
+
+    /**
+     * Init SNS Facebook
+     */
+    private void initSNSFacebook() {
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        AppEventsLogger.activateApp(this);
+
+    }
+
+    /**
+     * Init SNS Google
+     */
+    private void initSNSGoogle() {
+
     }
 
     @Override
@@ -150,16 +168,16 @@ public class MainActivity extends AppCompatActivity {
         Log.i("AoA-NFC", "IntentType: " + type);
 
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
-            && ActionCam.MIME_TYPE.equals(type)) {
+            && SonyActionCam.MIME_TYPE.equals(type)) {
 
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
-            String[] setting = ActionCam.resolveTagAndGetWifiSetting(tag);
+            String[] setting = SonyActionCam.resolveTagAndGetWifiSetting(tag);
 
             if (null != setting) {
 
                 // Add Camera
-                dbHelper.addCamera("sony", setting[0], setting[1]);
+                dbHelper.addCameraItem(setting[0], setting[1], "sony");
 
                 // Refresh Camera List
                 refreshCameraList();
@@ -271,28 +289,24 @@ public class MainActivity extends AppCompatActivity {
      */
     private void refreshCameraList() {
 
-        ArrayList<Integer> cameraIdList = new ArrayList<Integer>();
         ArrayList<String> cameraSSIDList = new ArrayList<String>();
 
-        dbCursor = dbHelper.readCameras();
+        dbCursor = dbHelper.getCameraList();
 
         if (0 != dbCursor.getCount()) {
             dbCursor.moveToFirst();
 
             while (!dbCursor.isAfterLast()) {
-                int id = dbCursor.getInt(dbCursor.getColumnIndex("id"));
                 String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
 
-                Log.i("AoA-CameraView", "Item: " + id + ", " + ssid);
+                Log.i("AoA-CameraView", "Item: " + ssid);
 
-                cameraIdList.add(id);
                 cameraSSIDList.add(ssid);
 
                 dbCursor.moveToNext();
             }
         }
 
-        cameraIdArray = (Integer[]) cameraIdList.toArray(new Integer[cameraIdList.size()]);
         cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
 
         Log.i("AoA-CameraView", "Set Adapter");
@@ -307,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return cameraIdArray.length;
+            return cameraSSIDArray.length;
         }
 
         @Override
@@ -332,24 +346,28 @@ public class MainActivity extends AppCompatActivity {
             // Status
             status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
 
+            if (currentSSID.equals(cameraSSIDArray[listItem])) {
+                status.setText(R.string.icon_connect);
+            }
+
             // SSID
             ssid.setText(cameraSSIDArray[listItem]);
             ssid.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View arg0) {
-                    dbCursor = dbHelper.getCamera(cameraIdArray[listItem]);
+                    dbCursor = dbHelper.getCameraItem(cameraSSIDArray[listItem]);
 
                     if (0 != dbCursor.getCount()) {
 
                         dbCursor.moveToFirst();
 
-                        String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
                         String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
                         String pass = dbCursor.getString(dbCursor.getColumnIndex("pass"));
+                        String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
 
                         // Connect Camera Wifi Lan
-                        connectWifi(provider, ssid, pass);
+                        connectWifi(ssid, pass, provider);
                     }
                 }
             });
@@ -360,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onClick(View arg0) {
-                    dbHelper.removeCamera(cameraIdArray[listItem]);
+                    dbHelper.removeCameraItem(cameraSSIDArray[listItem]);
 
                     // Refresh Camera List
                     refreshCameraList();
@@ -376,8 +394,9 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param ssid
      * @param pass
+     * @param provider
      */
-    private void connectWifi(String provider, String ssid, String pass) {
+    private void connectWifi(String ssid, String pass, String provider) {
 
         // New Wifi Config
         WifiConfiguration newConf = new WifiConfiguration();
@@ -408,9 +427,9 @@ public class MainActivity extends AppCompatActivity {
         // Get All Config
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
 
-        for (WifiConfiguration tmpConf : list) {
-            if(tmpConf.SSID == null
-                || tmpConf.SSID.equals(newConf.SSID)) {
+        for (WifiConfiguration currentConf : list) {
+            if(currentConf.SSID == null
+                || currentConf.SSID.equals(newConf.SSID)) {
 
                 continue;
             }
@@ -418,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i("AoA-WifiConfig", "SSID: " + newConf.SSID);
 
             wifiManager.disconnect();
-            wifiManager.enableNetwork(tmpConf.networkId, true);
+            wifiManager.enableNetwork(currentConf.networkId, true);
             wifiManager.reconnect();
 
             break;
@@ -427,15 +446,17 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Go to ControlPanel Page
+     *
+     * @param snsProvider
      */
-    private void goToControlPanelPage(String sns) {
+    private void goToControlPanelPage(String snsProvider) {
         if (null == cameraProvider) {
             return;
         }
 
         Intent intent = new Intent();
-        intent.putExtra("sns" , sns);
-        intent.putExtra("provider" , cameraProvider);
+        intent.putExtra("snsProvider" , snsProvider);
+        intent.putExtra("cameraProvider" , cameraProvider);
         intent.setClass(MainActivity.this , ControlPanelActivity.class);
 
         startActivity(intent);
