@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private DBHelper dbHelper;
 	private Cursor dbCursor;
 
+    private String[] cameraProviderArray;
     private String[] cameraSSIDArray;
 
     @Override
@@ -435,6 +436,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void refreshCameraList() {
 
+        ArrayList<String> cameraProviderList = new ArrayList<String>();
         ArrayList<String> cameraSSIDList = new ArrayList<String>();
 
         dbCursor = dbHelper.getCameraList();
@@ -444,16 +446,19 @@ public class MainActivity extends AppCompatActivity {
 
             while (!dbCursor.isAfterLast()) {
                 String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
+                String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
 
-                Log.i("AoA-CameraView", "Item: " + ssid);
+                Log.i("AoA-CameraView", "Item: " + ssid + ", " + provider);
 
                 cameraSSIDList.add(ssid);
+                cameraProviderList.add(provider);
 
                 dbCursor.moveToNext();
             }
         }
 
         cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
+        cameraProviderArray = (String[]) cameraProviderList.toArray(new String[cameraProviderList.size()]);
 
         Log.i("AoA-CameraView", "Set Adapter");
 
@@ -494,6 +499,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (currentSSID.equals(cameraSSIDArray[listItem])) {
                 status.setText(R.string.icon_connect);
+
+                // Set Camera Provider
+                cameraProvider = cameraProviderArray[listItem];
             }
 
             // SSID
@@ -634,6 +642,8 @@ public class MainActivity extends AppCompatActivity {
         if (null == cameraProvider) {
             return;
         }
+
+        Log.i("AoA-Activity", "Switch");
 
         Intent intent = new Intent();
         intent.putExtra("snsProvider" , snsProvider);

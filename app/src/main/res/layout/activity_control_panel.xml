@@ -18,22 +18,47 @@
         <SurfaceView
             android:id="@+id/liveView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="100dp" />
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
+
+            <Switch
+                android:id="@+id/micSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_toEndOf="@+id/startAndStop"
+                android:layout_toRightOf="@+id/startAndStop"
+                android:layout_weight="1"
+                android:text="@string/icon_microphone"
+                android:textAlignment="center"
+                android:textColor="@color/cardview_light_background" />
+
+            <Switch
+                android:id="@+id/camSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_below="@+id/micSwitch"
+                android:layout_toEndOf="@+id/startAndStop"
+                android:layout_toRightOf="@+id/startAndStop"
+                android:text="@string/icon_camera"
+                android:textAlignment="center"
+                android:textColor="@color/cardview_light_background" />
 
             <Button
                 android:id="@+id/startAndStop"
-                android:layout_width="wrap_content"
+                android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
                 android:text="@string/icon_start" />
+
         </RelativeLayout>
     </LinearLayout>
 
