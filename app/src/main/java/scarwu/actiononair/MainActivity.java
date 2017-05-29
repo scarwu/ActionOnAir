@@ -47,6 +47,7 @@ import scarwu.actiononair.libs.camera.SonyActionCam;
 
 // 3rd-party Libs
 import com.facebook.AccessToken;
+import com.facebook.AccessTokenTracker;
 import com.facebook.FacebookSdk;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -202,11 +203,12 @@ public class MainActivity extends AppCompatActivity {
                 String userId = accessToken.getUserId();
                 String token = accessToken.getToken();
 
-                Log.i("AoA-Facebook", "Success");
+                Log.i("AoA-Facebook", "Login");
                 Log.i("AoA-Facebook", "ApplicationId: " + applicationId);
                 Log.i("AoA-Facebook", "UserId: " + userId);
                 Log.i("AoA-Facebook", "Token: " + token);
 
+                dbHelper.removeSNSItem("facebook");
                 dbHelper.addSNSItem("facebook", token);
 
                 // Refresh Facebook Widget
@@ -216,11 +218,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 Log.i("AoA-Facebook", "Cancel");
-
-                dbHelper.addSNSItem("facebook", "");
-
-                // Refresh Facebook Widget
-                initSNSFacebookWidgets();
             }
 
             @Override
@@ -228,6 +225,23 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("AoA-Facebook", "Error");
             }
         });
+
+        AccessTokenTracker accessTokenTracker = new AccessTokenTracker() {
+
+            @Override
+            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
+                if (currentAccessToken == null) {
+                    Log.i("AoA-Facebook", "Logout");
+
+                    dbHelper.removeSNSItem("facebook");
+
+                    // Refresh Facebook Widget
+                    initSNSFacebookWidgets();
+                }
+            }
+        };
+
+        accessTokenTracker.startTracking();
     }
 
     @Override
@@ -291,6 +305,18 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initSNSFacebookWidgets() {
 
+        dbCursor = dbHelper.getSNSItem("facebook");
+
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            isFacebookAuth = !token.equals("");
+        } else {
+            isFacebookAuth = false;
+        }
+
         // Widgets
         Button status = (Button) findViewById(R.id.snsFacebookStatus);
         Button auth = (Button) findViewById(R.id.snsFacebookAuth);
@@ -299,18 +325,10 @@ public class MainActivity extends AppCompatActivity {
         // Status
         status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
 
-        dbCursor = dbHelper.getSNSItem("facebook");
-
-        if (0 != dbCursor.getCount()) {
-            dbCursor.moveToFirst();
-
-            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
-
-            if (!token.equals("")) {
-                status.setText(R.string.icon_link);
-            } else {
-                status.setText(R.string.icon_unlink);
-            }
+        if (isFacebookAuth) {
+            status.setText(R.string.icon_link);
+        } else {
+            status.setText(R.string.icon_unlink);
         }
 
         // Auth
@@ -318,12 +336,7 @@ public class MainActivity extends AppCompatActivity {
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-
-                if (isFacebookAuth) {
-                    new Facebook().account.disconnect();
-                } else {
-                    new Facebook().account.connect();
-                }
+                loginButton.callOnClick();
             }
         });
 
@@ -349,6 +362,18 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initSNSGoogleWidgets() {
 
+        dbCursor = dbHelper.getSNSItem("google");
+
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            isGoogleAuth = !token.equals("");
+        } else {
+            isGoogleAuth = false;
+        }
+
         // Widgets
         Button status = (Button) findViewById(R.id.snsGoogleStatus);
         Button auth = (Button) findViewById(R.id.snsGoogleAuth);
@@ -357,18 +382,10 @@ public class MainActivity extends AppCompatActivity {
         // Status
         status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
 
-        dbCursor = dbHelper.getSNSItem("google");
-
-        if (0 != dbCursor.getCount()) {
-            dbCursor.moveToFirst();
-
-            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
-
-            if (!token.equals("")) {
-                status.setText(R.string.icon_link);
-            } else {
-                status.setText(R.string.icon_unlink);
-            }
+        if (isGoogleAuth) {
+            status.setText(R.string.icon_link);
+        } else {
+            status.setText(R.string.icon_unlink);
         }
 
         // Auth
@@ -376,11 +393,11 @@ public class MainActivity extends AppCompatActivity {
         auth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                if (isGoogleAuth) {
-                    new Google().account.disconnect();
-                } else {
-                    new Google().account.connect();
-                }
+//                if (isGoogleAuth) {
+//                    new Google().account.disconnect();
+//                } else {
+//                    new Google().account.connect();
+//                }
             }
         });
 

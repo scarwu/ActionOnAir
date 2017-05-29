@@ -10,6 +10,16 @@
     tools:layout_editor_absoluteY="81dp"
     tools:layout_editor_absoluteX="0dp">
 
+    <com.facebook.login.widget.LoginButton
+        android:id="@+id/login_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/snsBlock"
         android:layout_width="match_parent"
@@ -35,15 +45,6 @@
             android:text="@string/sns_list"
             android:textAlignment="textStart"
             android:textColor="#fff" />
-
-        <com.facebook.login.widget.LoginButton
-            android:id="@+id/login_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="30dp"
-            android:layout_marginTop="30dp"
-            android:layout_weight="1" />
 
         <RelativeLayout
             android:layout_width="match_parent"
