@@ -15,8 +15,8 @@
     <string name="icon_unlink">&#xf127;</string>
     <string name="icon_connect">&#xf111;</string>
     <string name="icon_disconnect">&#xf10c;</string>
-    <string name="icon_start">&#xf00d;</string>
-    <string name="icon_stop">&#xf04d;</string>
+    <string name="icon_start">&#xf04b;</string>
+    <string name="icon_stop">&#xf04c;</string>
     <string name="icon_camera">&#xf03d;</string>
     <string name="icon_microphone">&#xf130;</string>
     <string name="icon_remove">&#xf00d;</string>

@@ -26,6 +26,7 @@ repositories {
 dependencies {
 
     // Google API Client
+    compile 'com.google.android.gms:play-services-auth:9.8.0'
     compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile('com.google.apis:google-api-services-youtube:v3-rev183-1.22.0') {
         exclude module: 'httpclient' //by artifact name
@@ -67,3 +68,5 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support:cardview-v7:25.3.1'
 }
+
+apply plugin: 'com.google.gms.google-services'

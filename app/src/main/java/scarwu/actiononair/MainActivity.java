@@ -45,7 +45,7 @@ import scarwu.actiononair.libs.sns.Facebook;
 import scarwu.actiononair.libs.sns.Google;
 import scarwu.actiononair.libs.camera.SonyActionCam;
 
-// 3rd-party Libs
+// Facebook Libs
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.FacebookSdk;
@@ -53,9 +53,16 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.CallbackManager;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+
+// Google Libs
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,8 +74,13 @@ public class MainActivity extends AppCompatActivity {
     private boolean isGoogleAuth = false;
     private String cameraProvider = null;
 
+    // Facebook
     private LoginButton loginButton;
     private CallbackManager callbackManager;
+
+    // Google
+    private GoogleApiClient googleApiClient;
+    private static final int GOOGLE_SIGN_IN = 9001;
 
     // Wifi
     WifiManager wifiManager;
@@ -245,18 +257,65 @@ public class MainActivity extends AppCompatActivity {
         accessTokenTracker.startTracking();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        callbackManager.onActivityResult(requestCode, resultCode, data);
-    }
-
     /**
      * Init SNS Google
      */
     private void initSNSGoogle() {
 
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build();
+
+        googleApiClient = new GoogleApiClient.Builder(this)
+//            .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+            .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+            .build();
+
+        SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        signInButton.setSize(SignInButton.SIZE_STANDARD);
+        signInButton.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View view) {
+                Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
+                startActivityForResult(signInIntent, GOOGLE_SIGN_IN);
+            }
+        });
+    }
+
+    private void handleSignInResult(GoogleSignInResult result) {
+
+        if (result.isSuccess()) {
+
+            GoogleSignInAccount account = result.getSignInAccount();
+
+            String id = account.getId();
+            String idToken = account.getIdToken();
+            String serverAuthCode = account.getServerAuthCode();
+
+            Log.i("AoA-Google", "Login");
+            Log.i("AoA-Google", "Id: " + id);
+            Log.i("AoA-Google", "IdToken: " + idToken);
+            Log.i("AoA-Google", "Token: " + serverAuthCode);
+        } else {
+            Log.i("AoA-Google", "Logout");
+
+
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.i("AoA-ActivityResult", "RequestCode: " + requestCode);
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == GOOGLE_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleSignInResult(result);
+        } else {
+            callbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
