@@ -12,22 +12,22 @@ package scarwu.actiononair;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.graphics.Color;
 import android.net.wifi.WifiInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.BroadcastReceiver;
 import android.app.PendingIntent;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.util.Log;
 import android.database.Cursor;
 
 // Widgets
-import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -103,6 +103,40 @@ public class MainActivity extends AppCompatActivity {
         // Get Wifi Info
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         currentSSID = wifiInfo.getSSID().replace("\"", "");
+
+        // Wifi Receiver
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+
+        registerReceiver(new wifiReceiver(), intentFilter);
+    }
+
+    /**
+     * Wifi Receiver
+     */
+    private class wifiReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String action = intent.getAction();
+
+            Log.i("AoA-WifiReceiver", "Action: " + action);
+
+            if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
+                if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)){
+                    WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                    currentSSID = wifiInfo.getSSID().replace("\"", "");
+                } else {
+                    currentSSID = null;
+                }
+
+                Log.i("AoA-WifiReceiver", "SSID: " + currentSSID);
+
+                // Refresh Camera List
+                refreshCameraList();
+            }
+        }
     }
 
     /**
@@ -421,27 +455,62 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        wifiManager.addNetwork(newConf);
+        // Open Wifi
         wifiManager.setWifiEnabled(true);
 
         // Get All Config
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
+        Integer networkId = null;
 
         for (WifiConfiguration currentConf : list) {
             if(currentConf.SSID == null
-                || currentConf.SSID.equals(newConf.SSID)) {
+                || !currentConf.SSID.equals(newConf.SSID)) {
+
+                Log.i("AoA-WifiConfig", "DisableSSID: " + currentConf.SSID.replace("\"", ""));
+
+                wifiManager.disableNetwork(currentConf.networkId);
 
                 continue;
             }
 
-            Log.i("AoA-WifiConfig", "SSID: " + newConf.SSID);
+            networkId = currentConf.networkId;
+            newConf.networkId = currentConf.networkId;
 
-            wifiManager.disconnect();
-            wifiManager.enableNetwork(currentConf.networkId, true);
-            wifiManager.reconnect();
-
-            break;
+            // Update Network
+            wifiManager.updateNetwork(newConf);
         }
+
+        if (null == networkId) {
+
+            // Add Network
+            wifiManager.addNetwork(newConf);
+
+            // Get All Config Again
+            list = wifiManager.getConfiguredNetworks();
+
+            for (WifiConfiguration currentConf : list) {
+                if(currentConf.SSID == null
+                    || !currentConf.SSID.equals(newConf.SSID)) {
+
+                    continue;
+                }
+
+                networkId = currentConf.networkId;
+
+                break;
+            }
+        }
+
+        Log.i("AoA-WifiConfig", "EnableSSID: " + newConf.SSID.replace("\"", ""));
+
+        // Disconnect Wifi Connection
+        wifiManager.disconnect();
+
+        wifiManager.enableNetwork(networkId, true);
+        wifiManager.saveConfiguration();
+
+        // Reconnect Wifi Connection
+        wifiManager.reconnect();
     }
 
     /**
