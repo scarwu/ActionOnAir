@@ -1,5 +1,5 @@
 /**
- * Sony - Action Cam
+ * Sony Action Cam
  *
  * @package     Action on Air
  * @author      ScarWu
@@ -7,8 +7,11 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.camera;
+package scarwu.actiononair.cameras;
 
+import java.io.IOException;
+
+import android.content.Context;
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
@@ -16,18 +19,42 @@ import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.util.Log;
 
-import java.io.IOException;
+import scarwu.actiononair.cameras.sony.SSDPClient;
+import scarwu.actiononair.cameras.sony.RemoteDevice;
 
 public class SonyActionCam {
 
+    private static final String TAG = "AoA-" + SonyActionCam.class.getSimpleName();
+
     public static final String MIME_TYPE = "application/x-sony-pmm";
 
-    public SonyActionCam() {
+    Context ctx;
 
+    SSDPClient ssdpClient;
+
+    public SonyActionCam(Context context) {
+        ctx = context;
+        ssdpClient = new SSDPClient();
     }
 
     public void discover() {
+        ssdpClient.search(new SSDPClient.SearchResultHandler() {
 
+            @Override
+            public void onDeviceFound(final RemoteDevice device) {
+                Log.i(TAG, device.getIpAddres());
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+
+            @Override
+            public void onErrorFinished() {
+
+            }
+        });
     }
 
     public void setting() {
@@ -50,37 +77,37 @@ public class SonyActionCam {
 
             NdefMessage message = ndef.getNdefMessage();
 
-            Log.i("NFC", "NdefMessage: " + message);
+            Log.i(TAG, "Resolve: NdefMessage: " + message);
 
             NdefRecord[] records = message.getRecords();
 
             for (NdefRecord record: records) {
                 String recordType = new String(record.getType());
 
-                Log.i("NFC", "NdefRecordType: " + recordType);
-                Log.i("NFC", "NdefRecordPayload: " + new String(record.getPayload()));
+                Log.i(TAG, "Resolve: NdefRecordType: " + recordType);
+                Log.i(TAG, "Resolve: NdefRecordPayload: " + new String(record.getPayload()));
 
                 if (MIME_TYPE.equals(new String(record.getType()))) {
                     setting = decodePayload(record.getPayload());
 
                     if (null != setting) {
-                        Log.i("NFC", "WifiSSID: " + setting[0]);
-                        Log.i("NFC", "WifiPass: " + setting[1]);
+                        Log.i(TAG, "Resolve: WifiSSID: " + setting[0]);
+                        Log.i(TAG, "Resolve: WifiPass: " + setting[1]);
                     }
                 }
             }
         } catch (NullPointerException e) {
-            Log.e("NFC", "NullPointerException", e);
+            Log.e(TAG, "Resolve: NullPointerException", e);
         } catch (FormatException e) {
-            Log.e("NFC", "FormatException", e);
+            Log.e(TAG, "Resolve: FormatException", e);
         } catch (IOException e) {
-            Log.e("NFC", "IOException", e);
+            Log.e(TAG, "Resolve: IOException", e);
         } finally {
             if (ndef != null) {
                 try {
                     ndef.close();
                 } catch (IOException e) {
-                    Log.e("NFC", "Error closing tag...", e);
+                    Log.e(TAG, "Resolve: Error closing tag...", e);
                 }
             }
         }

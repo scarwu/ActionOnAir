@@ -1,5 +1,5 @@
 /**
- * Facebook - Account
+ * Facebook
  *
  * @package     Action on Air
  * @author      ScarWu
@@ -7,13 +7,15 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.sns;
+package scarwu.actiononair.sns;
 
 // 3rd-Party Libs
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
 
 public class Facebook {
+
+    private static final String TAG = "AoA-" + Facebook.class.getSimpleName();
 
     private static boolean isInit = false;
 

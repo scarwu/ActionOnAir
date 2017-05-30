@@ -9,41 +9,31 @@
 
 package scarwu.actiononair;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Bundle;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.BroadcastReceiver;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.database.Cursor;
 import android.util.Log;
-
-// Widgets
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-
-// Devices
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiInfo;
-import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+
+import java.util.ArrayList;
 
 // Custom Libs
 import scarwu.actiononair.libs.DBHelper;
+import scarwu.actiononair.libs.WifiDevice;
+import scarwu.actiononair.libs.NFCDevice;
 import scarwu.actiononair.libs.FontManager;
-import scarwu.actiononair.libs.sns.Facebook;
-import scarwu.actiononair.libs.sns.Google;
-import scarwu.actiononair.libs.camera.SonyActionCam;
+import scarwu.actiononair.sns.Facebook;
+import scarwu.actiononair.sns.Google;
+import scarwu.actiononair.cameras.SonyActionCam;
 
 // Facebook Libs
 import com.facebook.AccessToken;
@@ -71,146 +61,150 @@ import com.google.android.gms.common.api.Status;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Widgets
-    private ListView cameraList;
+    private static final String TAG = "AoA-" + MainActivity.class.getSimpleName();
+
+    private Activity appActivity;
+    private Context appContext;
+
+    // SQLite
+    private DBHelper dbHelper;
+
+    // Devices
+    private WifiDevice wifiDevice;
+    private NFCDevice nfcDevice;
+
+    // Facebook
+    private LoginButton facebookLoginButton;
+    private CallbackManager callbackManager;
+
+    // Google
+    private GoogleApiClient googleApiClient;
+    private static final String GOOGLE_CLIENT_ID = "156988006491-umvot01al8ic6p99nqd7qn4rqguspcg5.apps.googleusercontent.com";
+    private static final int GOOGLE_SIGN_IN = 9001;
 
     // Flags
     private boolean isFacebookAuth = false;
     private boolean isGoogleAuth = false;
     private String cameraProvider = null;
 
-    // Facebook
-    private Button snsFacebookStatus;
-    private LoginButton facebookLoginButton;
-    private CallbackManager callbackManager;
-
-    // Google
-    private Button snsGoogleStatus;
-    private SignInButton googleLoginButton;
-    private GoogleApiClient googleApiClient;
-    private static final String GOOGLE_CLIENT_ID = "156988006491-umvot01al8ic6p99nqd7qn4rqguspcg5.apps.googleusercontent.com";
-    private static final int GOOGLE_SIGN_IN = 9001;
-
-    // Wifi
-    WifiManager wifiManager;
-    String currentSSID;
-
-    // NFC
-    private NfcAdapter nfcAdapter;
-    private PendingIntent nfcPendingIntent;
-    private IntentFilter[] nfcFilters;
-
-    // SQLite
-    private DBHelper dbHelper;
-	private Cursor dbCursor;
-
     private String[] cameraProviderArray;
     private String[] cameraSSIDArray;
+
+    // Widgets
+    private Button snsFacebookStatus;
+    private Button snsGoogleStatus;
+    private ListView cameraList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.i(TAG, "Create");
+
         setContentView(R.layout.activity_main);
 
+        // Get Application Objects
+        appActivity = this;
+        appContext = getApplicationContext();
+
         // DB Helper
-        dbHelper = new DBHelper(this);
+        dbHelper = new DBHelper(appContext);
 
         // Init Devices
-        initWifiDevice();
-        initNFCDevice();
+        wifiDevice = new WifiDevice(appContext, new WifiDevice.CallbackHandler() {
+
+            @Override
+            public void onSSIDChange(String ssid) {
+
+                // Refresh Camera List
+                refreshCameraList();
+            }
+        });
+
+        nfcDevice = new NFCDevice(appActivity, appContext, new NFCDevice.CallbackHandler() {
+
+            @Override
+            public void onTAGReceive(Tag tag) {
+
+                String[] setting = SonyActionCam.resolveTagAndGetWifiSetting(tag);
+
+                if (null == setting) {
+                    return;
+                }
+
+                // Add Camera
+                dbHelper.addCameraItem(setting[0], setting[1], "sony");
+
+                // Refresh Camera List
+                refreshCameraList();
+            }
+        });
 
         // Init SNS
         initSNSFacebook();
         initSNSGoogle();
 
         // Init Widgets
-        initSNSFacebookWidgets();
-        initSNSGoogleWidgets();
-        initCameraWidgets();
+        initLocalWidgets();
+        initGlobalWidgets();
+
+        // Refresh Widgets
+        refreshSNSFacebookStatus();
+        refreshSNSGoogleStatus();
+        refreshCameraList();
     }
 
-    /**
-     * Init Wifi Device
-     */
-    private void initWifiDevice() {
-        wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    @Override
+    protected void onPause() {
+        super.onPause();
 
-        // Get Wifi Info
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        currentSSID = wifiInfo.getSSID().replace("\"", "");
+        Log.i(TAG, "Pause");
 
-        // Wifi Receiver
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
-        intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-
-        registerReceiver(new wifiReceiver(), intentFilter);
+        // NFC
+        nfcDevice.onPause();
     }
 
-    /**
-     * Wifi Receiver
-     */
-    private class wifiReceiver extends BroadcastReceiver {
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
+        Log.i(TAG, "Resume");
 
-            // Get Status
-            String action = intent.getAction();
+        // NFC
+        nfcDevice.onResume();
+    }
 
-            Log.i("AoA-WifiReceiver", "Action: " + action);
+    @Override
+    protected void onNewIntent(Intent intent) {
 
-            if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)
-                || action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+        Log.i(TAG, "NewIntent");
 
-                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-                String newSSID = wifiInfo.getSSID().replace("\"", "");
+        // NFC
+        nfcDevice.onNewIntent(intent);
+    }
 
-                if (currentSSID.equals(newSSID)) {
-                    return;
-                }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-                Log.i("AoA-WifiReceiver", "OldSSID: " + currentSSID);
-                Log.i("AoA-WifiReceiver", "NewSSID: " + newSSID);
+        Log.i(TAG, "ActivityResult");
+        Log.i(TAG, "ActivityResult: RequestCode: " + requestCode);
 
-                // Assign new SSID
-                currentSSID = newSSID;
-
-                // Refresh Camera List
-                refreshCameraList();
-            }
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == GOOGLE_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            handleGoogleSignInResult(result);
+        } else {
+            callbackManager.onActivityResult(requestCode, resultCode, data);
         }
-    }
-
-    /**
-     * Init NFC Device
-     */
-    private void initNFCDevice() {
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        nfcPendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-
-        // NFC Action Filter Actions
-        IntentFilter nfcIntentFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-
-        try {
-            nfcIntentFilter.addDataType("*/*");
-        } catch (IntentFilter.MalformedMimeTypeException e) {
-            throw new RuntimeException("addDataTypeFail", e);
-        }
-
-        nfcFilters = new IntentFilter[] {
-            nfcIntentFilter
-        };
     }
 
     /**
      * Init SNS Facebook
      */
     private void initSNSFacebook() {
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        AppEventsLogger.activateApp(this);
+        FacebookSdk.sdkInitialize(appContext);
+        AppEventsLogger.activateApp(appContext);
 
         callbackManager = CallbackManager.Factory.create();
 
@@ -225,10 +219,10 @@ public class MainActivity extends AppCompatActivity {
                 String userId = accessToken.getUserId();
                 String token = accessToken.getToken();
 
-                Log.i("AoA-Facebook", "LoginSuccess");
-                Log.i("AoA-Facebook", "ApplicationId: " + applicationId);
-                Log.i("AoA-Facebook", "UserId: " + userId);
-                Log.i("AoA-Facebook", "Token: " + token);
+                Log.i(TAG, "Facebook: LoginSuccess");
+                Log.i(TAG, "Facebook: ApplicationId: " + applicationId);
+                Log.i(TAG, "Facebook: UserId: " + userId);
+                Log.i(TAG, "Facebook: Token: " + token);
 
                 dbHelper.removeSNSItem("facebook");
                 dbHelper.addSNSItem("facebook", token);
@@ -239,12 +233,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCancel() {
-                Log.i("AoA-Facebook", "LoginCancel");
+                Log.i(TAG, "Facebook: LoginCancel");
             }
 
             @Override
             public void onError(FacebookException exception) {
-                Log.i("AoA-Facebook", "LoginError");
+                Log.i(TAG, "Facebook: LoginError");
             }
         });
 
@@ -253,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
                 if (currentAccessToken == null) {
-                    Log.i("AoA-Facebook", "Logout");
+                    Log.i(TAG, "Facebook: Logout");
 
                     dbHelper.removeSNSItem("facebook");
 
@@ -277,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
             .requestEmail()
             .build();
 
-        googleApiClient = new GoogleApiClient.Builder(this)
+        googleApiClient = new GoogleApiClient.Builder(appContext)
             .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
             .build();
     }
@@ -296,9 +290,9 @@ public class MainActivity extends AppCompatActivity {
             String id = account.getId();
             String serverAuthCode = account.getServerAuthCode();
 
-            Log.i("AoA-Google", "LoginSuccess");
-            Log.i("AoA-Google", "Id: " + id);
-            Log.i("AoA-Google", "ServerAuthCode: " + serverAuthCode);
+            Log.i(TAG, "Google: LoginSuccess");
+            Log.i(TAG, "Google: Id: " + id);
+            Log.i(TAG, "Google: ServerAuthCode: " + serverAuthCode);
 
             dbHelper.removeSNSItem("google");
             dbHelper.addSNSItem("google", id);
@@ -308,116 +302,49 @@ public class MainActivity extends AppCompatActivity {
         } else {
             int code = result.getStatus().getStatusCode();
 
-            Log.i("AoA-Google", "LoginFail");
-            Log.i("AoA-Google", "Code: " + code);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        Log.i("AoA-ActivityResult", "RequestCode: " + requestCode);
-
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == GOOGLE_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleGoogleSignInResult(result);
-        } else {
-            callbackManager.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        nfcAdapter.disableForegroundDispatch(this);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        nfcAdapter.enableForegroundDispatch(this, nfcPendingIntent, nfcFilters, null);
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-
-        // Get Status
-        String action = intent.getAction();
-        String type = intent.getType();
-
-        Log.i("AoA-NFC", "IntentAction: " + action);
-        Log.i("AoA-NFC", "IntentType: " + type);
-
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
-            && SonyActionCam.MIME_TYPE.equals(type)) {
-
-            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-
-            String[] setting = SonyActionCam.resolveTagAndGetWifiSetting(tag);
-
-            if (null != setting) {
-
-                // Add Camera
-                dbHelper.addCameraItem(setting[0], setting[1], "sony");
-
-                // Refresh Camera List
-                refreshCameraList();
-            }
+            Log.i(TAG, "Google: LoginFail");
+            Log.i(TAG, "Google: Code: " + code);
         }
     }
 
     /**
-     * Refresh SNS Facebook Status
+     * Init Camera Widgets
      */
-    private void refreshSNSFacebookStatus() {
-        dbCursor = dbHelper.getSNSItem("facebook");
-
-        if (0 != dbCursor.getCount()) {
-            dbCursor.moveToFirst();
-
-            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
-
-            isFacebookAuth = !token.equals("");
-        } else {
-            isFacebookAuth = false;
-        }
-
-        if (isFacebookAuth) {
-            snsFacebookStatus.setText(R.string.icon_link);
-        } else {
-            snsFacebookStatus.setText(R.string.icon_unlink);
-        }
-    }
-
-    /**
-     * Init SNS Facebook Widgets
-     */
-    private void initSNSFacebookWidgets() {
-
-        // Widgets
-        Button auth = (Button) findViewById(R.id.snsFacebookAuth);
-        Button live = (Button) findViewById(R.id.snsFacebookLive);
+    private void initGlobalWidgets() {
 
         // Status
         snsFacebookStatus = (Button) findViewById(R.id.snsFacebookStatus);
-        snsFacebookStatus.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+        snsFacebookStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
 
-        // Auth
-        auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-        auth.setOnClickListener(new View.OnClickListener() {
+        // Status
+        snsGoogleStatus = (Button) findViewById(R.id.snsGoogleStatus);
+        snsGoogleStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+
+        // List
+        cameraList = (ListView) findViewById(R.id.cameraList);
+    }
+
+    /**
+     * Init Local Widgets
+     */
+    private void initLocalWidgets() {
+
+        // Facebook Widgets
+        Button snsFacebookAuth = (Button) findViewById(R.id.snsFacebookAuth);
+        Button snsFacebookLive = (Button) findViewById(R.id.snsFacebookLive);
+
+        // SNS Facebook Auth
+        snsFacebookAuth.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+        snsFacebookAuth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 facebookLoginButton.callOnClick();
             }
         });
 
-        // Live
-        live.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-        live.setOnClickListener(new View.OnClickListener() {
+        // SNS Facebook Live
+        snsFacebookLive.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+        snsFacebookLive.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 if (!isFacebookAuth) {
@@ -431,49 +358,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Refresh SNS Google Status
-        refreshSNSFacebookStatus();
-    }
+        // Google Widgets
+        Button snsGoogleAuth = (Button) findViewById(R.id.snsGoogleAuth);
+        Button snsGoogleLive = (Button) findViewById(R.id.snsGoogleLive);
 
-    /**
-     * Refresh SNS Google Status
-     */
-    private void refreshSNSGoogleStatus() {
-        dbCursor = dbHelper.getSNSItem("google");
-
-        if (0 != dbCursor.getCount()) {
-            dbCursor.moveToFirst();
-
-            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
-
-            isGoogleAuth = !token.equals("");
-        } else {
-            isGoogleAuth = false;
-        }
-
-        if (isGoogleAuth) {
-            snsGoogleStatus.setText(R.string.icon_link);
-        } else {
-            snsGoogleStatus.setText(R.string.icon_unlink);
-        }
-    }
-
-    /**
-     * Init SNS Google Widgets
-     */
-    private void initSNSGoogleWidgets() {
-
-        // Widgets
-        Button auth = (Button) findViewById(R.id.snsGoogleAuth);
-        Button live = (Button) findViewById(R.id.snsGoogleLive);
-
-        // Status
-        snsGoogleStatus = (Button) findViewById(R.id.snsGoogleStatus);
-        snsGoogleStatus.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-
-        // Auth
-        auth.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-        auth.setOnClickListener(new View.OnClickListener() {
+        // SND Google Auth
+        snsGoogleAuth.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+        snsGoogleAuth.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
 
@@ -507,9 +398,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Live
-        live.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
-        live.setOnClickListener(new View.OnClickListener() {
+        // SND Google Live
+        snsGoogleLive.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+        snsGoogleLive.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
                 if (!isGoogleAuth) {
@@ -522,21 +413,52 @@ public class MainActivity extends AppCompatActivity {
                 goToControlPanelPage("google");
             }
         });
-
-        // Refresh SNS Google Status
-        refreshSNSGoogleStatus();
     }
 
     /**
-     * Init Camera Widgets
+     * Refresh SNS Facebook Status
      */
-    private void initCameraWidgets() {
+    private void refreshSNSFacebookStatus() {
+        Cursor dbCursor = dbHelper.getSNSItem("facebook");
 
-        // List
-        cameraList = (ListView) findViewById(R.id.cameraList);
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
 
-        // Refresh Camera List
-        refreshCameraList();
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            isFacebookAuth = !token.equals("");
+        } else {
+            isFacebookAuth = false;
+        }
+
+        if (isFacebookAuth) {
+            snsFacebookStatus.setText(R.string.icon_link);
+        } else {
+            snsFacebookStatus.setText(R.string.icon_unlink);
+        }
+    }
+
+    /**
+     * Refresh SNS Google Status
+     */
+    private void refreshSNSGoogleStatus() {
+        Cursor dbCursor = dbHelper.getSNSItem("google");
+
+        if (0 != dbCursor.getCount()) {
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            isGoogleAuth = !token.equals("");
+        } else {
+            isGoogleAuth = false;
+        }
+
+        if (isGoogleAuth) {
+            snsGoogleStatus.setText(R.string.icon_link);
+        } else {
+            snsGoogleStatus.setText(R.string.icon_unlink);
+        }
     }
 
     /**
@@ -547,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> cameraProviderList = new ArrayList<String>();
         ArrayList<String> cameraSSIDList = new ArrayList<String>();
 
-        dbCursor = dbHelper.getCameraList();
+        Cursor dbCursor = dbHelper.getCameraList();
 
         if (0 != dbCursor.getCount()) {
             dbCursor.moveToFirst();
@@ -603,9 +525,9 @@ public class MainActivity extends AppCompatActivity {
             Button remove = (Button) listView.findViewById(R.id.removeCamera);
 
             // Status
-            status.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+            status.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
 
-            if (currentSSID.equals(cameraSSIDArray[listItem])) {
+            if (wifiDevice.getCurrentSSID().equals(cameraSSIDArray[listItem])) {
                 status.setText(R.string.icon_connect);
 
                 // Set Camera Provider
@@ -618,24 +540,27 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onClick(View arg0) {
-                    dbCursor = dbHelper.getCameraItem(cameraSSIDArray[listItem]);
+                    Cursor dbCursor = dbHelper.getCameraItem(cameraSSIDArray[listItem]);
 
-                    if (0 != dbCursor.getCount()) {
+                    if (0 == dbCursor.getCount()) {
+                        return;
+                    }
 
-                        dbCursor.moveToFirst();
+                    dbCursor.moveToFirst();
 
-                        String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
-                        String pass = dbCursor.getString(dbCursor.getColumnIndex("pass"));
-                        String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
+                    String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
+                    String pass = dbCursor.getString(dbCursor.getColumnIndex("pass"));
+                    String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
 
-                        // Connect Camera Wifi Lan
-                        connectWifi(ssid, pass, provider);
+                    // Connect Camera Wifi Lan
+                    if ("sony".equals(provider)) {
+                        wifiDevice.connectAP(ssid, pass, "wpa");
                     }
                 }
             });
 
             // Remove
-            remove.setTypeface(FontManager.getTypeface(MainActivity.this, FontManager.FONTAWESOME));
+            remove.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
             remove.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -652,102 +577,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Connect Wifi
-     *
-     * @param ssid
-     * @param pass
-     * @param provider
-     */
-    private void connectWifi(String ssid, String pass, String provider) {
-
-        // New Wifi Config
-        WifiConfiguration newConf = new WifiConfiguration();
-
-        newConf.SSID = "\"" + ssid + "\"";
-
-        // Sony Action Cam use WPA
-        if ("sony".equals(provider)) {
-            newConf.preSharedKey = "\"" + pass + "\"";
-            newConf.hiddenSSID = true;
-            newConf.status = WifiConfiguration.Status.ENABLED;
-
-            newConf.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-            newConf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-            newConf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-            newConf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-            newConf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-            newConf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-            newConf.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-            newConf.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-        } else {
-            return;
-        }
-
-        // Open Wifi
-        wifiManager.setWifiEnabled(true);
-
-        // Get All Config
-        List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
-        Integer networkId = null;
-
-        for (WifiConfiguration currentConf : list) {
-            if(currentConf.SSID == null
-                || !currentConf.SSID.equals(newConf.SSID)) {
-
-                Log.i("AoA-WifiConfig", "DisableSSID: " + currentConf.SSID.replace("\"", ""));
-
-                wifiManager.disableNetwork(currentConf.networkId);
-
-                continue;
-            }
-
-            networkId = currentConf.networkId;
-            newConf.networkId = currentConf.networkId;
-
-            // Update Network
-            wifiManager.updateNetwork(newConf);
-        }
-
-        if (null == networkId) {
-
-            // Add Network
-            wifiManager.addNetwork(newConf);
-
-            // Get All Config Again
-            list = wifiManager.getConfiguredNetworks();
-
-            for (WifiConfiguration currentConf : list) {
-                if(currentConf.SSID == null
-                    || !currentConf.SSID.equals(newConf.SSID)) {
-
-                    continue;
-                }
-
-                networkId = currentConf.networkId;
-
-                break;
-            }
-        }
-
-        Log.i("AoA-WifiConfig", "EnableSSID: " + newConf.SSID.replace("\"", ""));
-
-        // Disconnect Wifi Connection
-        wifiManager.disconnect();
-
-        wifiManager.enableNetwork(networkId, true);
-        wifiManager.saveConfiguration();
-
-        // Reconnect Wifi Connection
-        wifiManager.reconnect();
-    }
-
-    /**
      * Go to ControlPanel Page
      *
      * @param snsProvider
      */
     private void goToControlPanelPage(String snsProvider) {
         if (null == cameraProvider) {
+            Toast.makeText(appContext, "Please Connect Your Camera Wifi", Toast.LENGTH_SHORT).show();
+
             return;
         }
 
@@ -756,7 +593,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.putExtra("snsProvider" , snsProvider);
         intent.putExtra("cameraProvider" , cameraProvider);
-        intent.setClass(MainActivity.this , ControlPanelActivity.class);
+        intent.setClass(appContext , ControlPanelActivity.class);
 
         startActivity(intent);
     }

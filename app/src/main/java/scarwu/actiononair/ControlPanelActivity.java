@@ -9,6 +9,8 @@
 
 package scarwu.actiononair;
 
+import android.app.Activity;
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.SurfaceView;
@@ -20,11 +22,16 @@ import android.widget.Switch;
 // Custom Libs
 import scarwu.actiononair.libs.DBHelper;
 import scarwu.actiononair.libs.FontManager;
-import scarwu.actiononair.libs.sns.Facebook;
-import scarwu.actiononair.libs.sns.Google;
-import scarwu.actiononair.libs.camera.SonyActionCam;
+import scarwu.actiononair.sns.Facebook;
+import scarwu.actiononair.sns.Google;
+import scarwu.actiononair.cameras.SonyActionCam;
 
 public class ControlPanelActivity extends AppCompatActivity {
+
+    private static final String TAG = "AoA-" + ControlPanelActivity.class.getSimpleName();
+
+    private Activity appActivity;
+    private Context appContext;
 
     // Widgets
     private Switch micSoundSrcSwitch;
@@ -47,6 +54,10 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_control_panel);
 
+        // Get Application Objects
+        appActivity = this;
+        appContext = getApplicationContext();
+
         // Get Intent Extra
         snsProvider = getIntent().getExtras().getString("snsProvider");
         cameraProvider = getIntent().getExtras().getString("cameraProvider");
@@ -64,13 +75,16 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         // Camera
         if ("sony".equals(cameraProvider)) {
-            sonyActionCam = new SonyActionCam();
+            sonyActionCam = new SonyActionCam(appContext);
         } else {
             finish();
         }
 
         // Initialize Widgets
         initWidgets();
+
+        // Discover Device
+        sonyActionCam.discover();
     }
 
     /**
@@ -80,7 +94,7 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         final Button startAndStop = (Button) findViewById(R.id.startAndStop);
 
-        startAndStop.setTypeface(FontManager.getTypeface(ControlPanelActivity.this, FontManager.FONTAWESOME));
+        startAndStop.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
         startAndStop.setText(R.string.icon_start);
         startAndStop.setOnClickListener(new View.OnClickListener() {
 
@@ -115,9 +129,9 @@ public class ControlPanelActivity extends AppCompatActivity {
         liveView = (SurfaceView) findViewById(R.id.liveView);
 
         micSoundSrcSwitch = (Switch) findViewById(R.id.micSwitch);
-        micSoundSrcSwitch.setTypeface(FontManager.getTypeface(ControlPanelActivity.this, FontManager.FONTAWESOME));
+        micSoundSrcSwitch.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
 
         camSoundSrcSwitch = (Switch) findViewById(R.id.camSwitch);
-        camSoundSrcSwitch.setTypeface(FontManager.getTypeface(ControlPanelActivity.this, FontManager.FONTAWESOME));
+        camSoundSrcSwitch.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Facebook - Account
+ * Google
  *
  * @package     Action on Air
  * @author      ScarWu
@@ -7,7 +7,7 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
-package scarwu.actiononair.libs.sns;
+package scarwu.actiononair.sns;
 
 import java.io.File;
 import java.io.BufferedReader;
@@ -37,6 +37,8 @@ import java.util.List;
 //import com.google.common.collect.Lists;
 
 public class Google {
+
+    private static final String TAG = "AoA-" + Google.class.getSimpleName();
 
     private static boolean isInit = false;
 

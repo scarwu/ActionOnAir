@@ -18,13 +18,15 @@ import android.util.Log;
 
 public class DBHelper extends SQLiteOpenHelper {
 
+    private static final String TAG = "AoA-" + DBHelper.class.getSimpleName();
+
     public DBHelper(Context context) {
         super(context, "ActionOnAir", null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Log.i("AoA-SQLite", "Create");
+        Log.i(TAG, "Create");
 
         db.execSQL("CREATE TABLE camera ("
             + "ssid TEXT primary key,"
@@ -40,7 +42,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.i("AoA-SQLite", "upgrade");
+        Log.i(TAG, "Upgrade");
 
         db.execSQL("DROP TABLE IF EXISTS camera");
         db.execSQL("DROP TABLE IF EXISTS sns");
@@ -54,7 +56,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public Cursor getCameraList() {
-        Log.i("AoA-SQLite", "Get Camera List");
+        Log.i(TAG, "Get Camera List");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -69,7 +71,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public Cursor getCameraItem(String ssid) {
-        Log.i("AoA-SQLite", "Get Camera Item");
+        Log.i(TAG, "Get Camera Item");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -90,7 +92,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public long addCameraItem(String ssid, String pass, String provider) {
-        Log.i("AoA-SQLite", "Add Camera Item");
+        Log.i(TAG, "Add Camera Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -108,7 +110,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @param ssid
      */
     public void removeCameraItem(String ssid) {
-        Log.i("AoA-SQLite", "Remove Camera Item");
+        Log.i(TAG, "Remove Camera Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -125,7 +127,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public Cursor getSNSList() {
-        Log.i("AoA-SQLite", "Get SNS List");
+        Log.i(TAG, "Get SNS List");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -140,7 +142,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public Cursor getSNSItem(String provider) {
-        Log.i("AoA-SQLite", "Get SNS Item");
+        Log.i(TAG, "Get SNS Item");
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -160,7 +162,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @return
      */
     public long addSNSItem(String provider, String token) {
-        Log.i("AoA-SQLite", "Add SNS Item");
+        Log.i(TAG, "Add SNS Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -177,7 +179,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @param provider
      */
     public void removeSNSItem(String provider) {
-        Log.i("AoA-SQLite", "Remove SNS Item");
+        Log.i(TAG, "Remove SNS Item");
 
         SQLiteDatabase db = this.getWritableDatabase();
 
