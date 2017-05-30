@@ -7,6 +7,10 @@
  * @link        http://github.com/scarwu/ActionOnAir
  */
 
+/**
+ * Copyright 2014 Sony Corporation
+ */
+
 package scarwu.actiononair.cameras.sony;
 
 import java.io.ByteArrayOutputStream;
