@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        nfcDevice = new NFCDevice(appActivity, appContext, new NFCDevice.CallbackHandler() {
+        nfcDevice = new NFCDevice(appContext, new NFCDevice.CallbackHandler() {
 
             @Override
             public void onTAGReceive(Tag tag) {
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Pause");
 
         // NFC
-        nfcDevice.onPause();
+        nfcDevice.onPause(appActivity);
     }
 
     @Override
@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Resume");
 
         // NFC
-        nfcDevice.onResume();
+        nfcDevice.onResume(appActivity);
     }
 
     @Override
@@ -308,23 +308,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Init Camera Widgets
-     */
-    private void initGlobalWidgets() {
-
-        // Status
-        snsFacebookStatus = (Button) findViewById(R.id.snsFacebookStatus);
-        snsFacebookStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
-
-        // Status
-        snsGoogleStatus = (Button) findViewById(R.id.snsGoogleStatus);
-        snsGoogleStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
-
-        // List
-        cameraList = (ListView) findViewById(R.id.cameraList);
-    }
-
-    /**
      * Init Local Widgets
      */
     private void initLocalWidgets() {
@@ -368,9 +351,11 @@ public class MainActivity extends AppCompatActivity {
 
             public void onClick(View view) {
 
-                Log.i("AoA-Google", "Click");
+                Log.i(TAG, "Google: Click");
 
                 if (isGoogleAuth) {
+                    Log.i(TAG, "Google: Logout");
+
                     // TODO: Google Logout Error
 //                    Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback(new ResultCallback<Status>() {
 //
@@ -385,13 +370,13 @@ public class MainActivity extends AppCompatActivity {
 //                        }
 //                    });
 
-                    Log.i("AoA-Google", "Logout");
-
                     dbHelper.removeSNSItem("google");
 
                     // Refresh SNS Google Status
                     refreshSNSGoogleStatus();
                 } else {
+                    Log.i(TAG, "Google: Login");
+
                     Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
                     startActivityForResult(signInIntent, GOOGLE_SIGN_IN);
                 }
@@ -413,6 +398,23 @@ public class MainActivity extends AppCompatActivity {
                 goToControlPanelPage("google");
             }
         });
+    }
+
+    /**
+     * Init Global Widgets
+     */
+    private void initGlobalWidgets() {
+
+        // Status
+        snsFacebookStatus = (Button) findViewById(R.id.snsFacebookStatus);
+        snsFacebookStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+
+        // Status
+        snsGoogleStatus = (Button) findViewById(R.id.snsGoogleStatus);
+        snsGoogleStatus.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
+
+        // List
+        cameraList = (ListView) findViewById(R.id.cameraList);
     }
 
     /**
@@ -478,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
                 String ssid = dbCursor.getString(dbCursor.getColumnIndex("ssid"));
                 String provider = dbCursor.getString(dbCursor.getColumnIndex("provider"));
 
-                Log.i("AoA-CameraView", "Item: " + ssid + ", " + provider);
+                Log.i(TAG, "CameraList: Item: " + ssid + ", " + provider);
 
                 cameraSSIDList.add(ssid);
                 cameraProviderList.add(provider);
@@ -490,7 +492,7 @@ public class MainActivity extends AppCompatActivity {
         cameraSSIDArray = (String[]) cameraSSIDList.toArray(new String[cameraSSIDList.size()]);
         cameraProviderArray = (String[]) cameraProviderList.toArray(new String[cameraProviderList.size()]);
 
-        Log.i("AoA-CameraView", "Set Adapter");
+        Log.i(TAG, "CameraList: Set Adapter");
 
         cameraList.setAdapter(new ListAdapter());
     }

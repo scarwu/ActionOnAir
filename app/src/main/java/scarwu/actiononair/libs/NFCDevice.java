@@ -25,9 +25,6 @@ public class NFCDevice {
 
     private static final String TAG = "AoA-" + NFCDevice.class.getSimpleName();
 
-    private final Activity activity;
-    private final Context context;
-
     private CallbackHandler callbackHandler;
 
     public interface CallbackHandler {
@@ -36,38 +33,17 @@ public class NFCDevice {
 
     private NfcAdapter nfcAdapter;
 
-    private PendingIntent nfcPendingIntent;
-
-    private IntentFilter[] nfcFilters;
-
     /**
      * Constructor
      *
-     * @param appContext
+     * @param context
      * @param appCallbackHandler
      */
-
-    public NFCDevice(Activity appActivity, Context appContext, CallbackHandler appCallbackHandler) {
-        activity = appActivity;
-        context = appContext;
+    public NFCDevice(Context context, CallbackHandler appCallbackHandler) {
         callbackHandler = appCallbackHandler;
 
         // Initialize
         nfcAdapter = NfcAdapter.getDefaultAdapter(context);
-        nfcPendingIntent = PendingIntent.getActivity(context, 0, new Intent(context, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-
-        // NFC Action Filter Actions
-        IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-
-        try {
-            filter.addDataType("*/*");
-        } catch (IntentFilter.MalformedMimeTypeException e) {
-            throw new RuntimeException("addDataTypeFail", e);
-        }
-
-        nfcFilters = new IntentFilter[] {
-            filter
-        };
     }
 
     public void onNewIntent(Intent intent) {
@@ -89,11 +65,34 @@ public class NFCDevice {
         }
     }
 
-    public void onPause() {
+    public void onPause(Activity activity) {
         nfcAdapter.disableForegroundDispatch(activity);
     }
 
-    public void onResume() {
-        nfcAdapter.enableForegroundDispatch(activity, nfcPendingIntent, nfcFilters, null);
+    public void onResume(Activity activity) {
+
+        nfcAdapter.disableForegroundDispatch(activity);
+
+        final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(NfcAdapter.ACTION_NDEF_DISCOVERED);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+
+        try {
+            filter.addDataType("*/*");
+        } catch (IntentFilter.MalformedMimeTypeException e) {
+            throw new RuntimeException("Error handling MIME type.");
+        }
+
+        // set up foregound dispatch for reading purposes
+        IntentFilter[] filters = new IntentFilter[] {
+            filter
+        };
+
+        nfcAdapter.enableForegroundDispatch(activity, pendingIntent, filters, null);
     }
 }

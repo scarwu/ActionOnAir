@@ -27,8 +27,6 @@ public class WifiDevice {
 
     private static final String TAG = "AoA-" + WifiDevice.class.getSimpleName();
 
-    private final Context context;
-
     private CallbackHandler callbackHandler;
 
     public interface CallbackHandler {
@@ -42,15 +40,14 @@ public class WifiDevice {
     /**
      * Constructor
      *
-     * @param appContext
+     * @param context
      * @param appCallbackHandler
      */
-    public WifiDevice(Context appContext, CallbackHandler appCallbackHandler) {
-        context = appContext;
+    public WifiDevice(Context context, CallbackHandler appCallbackHandler) {
         callbackHandler = appCallbackHandler;
 
         // Initialize
-        wifiManager = (WifiManager) appContext.getSystemService(Context.WIFI_SERVICE);
+        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
         // Get Wifi Info
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
