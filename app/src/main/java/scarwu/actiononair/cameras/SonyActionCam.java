@@ -29,20 +29,42 @@ public class SonyActionCam {
     public static final String MIME_TYPE = "application/x-sony-pmm";
 
     Context ctx;
-
     SSDPClient ssdpClient;
 
-    public SonyActionCam(Context context) {
+    private CallbackHandler callbackHandler;
+    private String currentDeviceIP;
+
+    public SonyActionCam(Context context, CallbackHandler appCallbackHandler) {
         ctx = context;
+        callbackHandler = appCallbackHandler;
         ssdpClient = new SSDPClient();
+
+        currentDeviceIP = "";
+    }
+
+    public interface CallbackHandler {
+        public void onFoundDevice(String ipAdress);
+    }
+
+    public String getIPAddress() {
+        return currentDeviceIP;
     }
 
     public void discover() {
+
+        Log.i(TAG, "Discover");
+
+        // Call SSDP Client
         ssdpClient.search(new SSDPClient.SearchResultHandler() {
 
             @Override
             public void onDeviceFound(final RemoteDevice device) {
-                Log.i(TAG, device.getIpAddres());
+
+                currentDeviceIP = device.getIpAddres();
+
+                Log.i(TAG, "Callback: Current: " + currentDeviceIP);
+
+                callbackHandler.onFoundDevice(currentDeviceIP);
             }
 
             @Override

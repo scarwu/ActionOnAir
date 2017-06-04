@@ -13,8 +13,9 @@
     <string name="icon_twitch">&#xf1e8;</string>
     <string name="icon_link">&#xf0c1;</string>
     <string name="icon_unlink">&#xf127;</string>
-    <string name="icon_connect">&#xf111;</string>
-    <string name="icon_disconnect">&#xf10c;</string>
+    <string name="icon_connected">&#xf111;</string>
+    <string name="icon_connecting">&#xf192;</string>
+    <string name="icon_disconnected">&#xf10c;</string>
     <string name="icon_start">&#xf04b;</string>
     <string name="icon_stop">&#xf04c;</string>
     <string name="icon_camera">&#xf03d;</string>

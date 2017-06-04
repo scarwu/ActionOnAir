@@ -75,7 +75,13 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         // Camera
         if ("sony".equals(cameraProvider)) {
-            sonyActionCam = new SonyActionCam(appContext);
+            sonyActionCam = new SonyActionCam(appContext, new SonyActionCam.CallbackHandler() {
+
+                @Override
+                public void onFoundDevice(String ipAdress) {
+
+                }
+            });
         } else {
             finish();
         }

@@ -14,6 +14,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -27,14 +29,9 @@ public class WifiDevice {
 
     private static final String TAG = "AoA-" + WifiDevice.class.getSimpleName();
 
-    private CallbackHandler callbackHandler;
-
-    public interface CallbackHandler {
-        public void onSSIDChange(String ssid);
-    }
-
     private WifiManager wifiManager;
-
+    private ConnectivityManager connManager;
+    private CallbackHandler callbackHandler;
     private String currentSSID;
 
     /**
@@ -48,10 +45,12 @@ public class WifiDevice {
 
         // Initialize
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         // Get Wifi Info
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        currentSSID = wifiInfo.getSSID().replace("\"", "");
+        currentSSID = getCurrentSSID();
+
+        Log.i(TAG, "CurrentSSID: " + currentSSID);
 
         // Wifi Receiver
         IntentFilter filter = new IntentFilter();
@@ -60,6 +59,10 @@ public class WifiDevice {
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 
         context.registerReceiver(new wifiReceiver(), filter);
+    }
+
+    public interface CallbackHandler {
+        public void onSSIDChange(String ssid);
     }
 
     /**
@@ -78,8 +81,7 @@ public class WifiDevice {
             if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)
                     || action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 
-                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-                String newSSID = wifiInfo.getSSID().replace("\"", "");
+                String newSSID = getCurrentSSID();
 
                 if (currentSSID.equals(newSSID)) {
                     return;
@@ -103,6 +105,21 @@ public class WifiDevice {
      * @return
      */
     public String getCurrentSSID() {
+
+        try {
+            NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if (!networkInfo.isAvailable()) {
+                return "";
+            }
+        } catch (NullPointerException e) {
+            return "";
+        }
+
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+        String currentSSID = wifiInfo.getSSID().replace("\"", "");
+
         return currentSSID;
     }
 

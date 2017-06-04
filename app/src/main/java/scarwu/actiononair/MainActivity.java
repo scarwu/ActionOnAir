@@ -95,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
     private Button snsGoogleStatus;
     private ListView cameraList;
 
+    private SonyActionCam sonyActionCam;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,14 +112,34 @@ public class MainActivity extends AppCompatActivity {
         // DB Helper
         dbHelper = new DBHelper(appContext);
 
+        sonyActionCam = new SonyActionCam(appContext, new SonyActionCam.CallbackHandler() {
+
+            @Override
+            public void onFoundDevice(String ipAdress) {
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+
+                        // Refresh Camera List
+                        refreshCameraList();
+                    }
+                });
+            }
+        });
+
         // Init Devices
         wifiDevice = new WifiDevice(appContext, new WifiDevice.CallbackHandler() {
 
             @Override
             public void onSSIDChange(String ssid) {
 
-                // Refresh Camera List
-                refreshCameraList();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+
+                        // Refresh Camera List
+                        refreshCameraList();
+                    }
+                });
             }
         });
 
@@ -135,8 +157,13 @@ public class MainActivity extends AppCompatActivity {
                 // Add Camera
                 dbHelper.addCameraItem(setting[0], setting[1], "sony");
 
-                // Refresh Camera List
-                refreshCameraList();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+
+                        // Refresh Camera List
+                        refreshCameraList();
+                    }
+                });
             }
         });
 
@@ -227,8 +254,13 @@ public class MainActivity extends AppCompatActivity {
                 dbHelper.removeSNSItem("facebook");
                 dbHelper.addSNSItem("facebook", token);
 
-                // Refresh SNS Facebook Status
-                refreshSNSFacebookStatus();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+
+                        // Refresh SNS Facebook Status
+                        refreshSNSFacebookStatus();
+                    }
+                });
             }
 
             @Override
@@ -251,8 +283,13 @@ public class MainActivity extends AppCompatActivity {
 
                     dbHelper.removeSNSItem("facebook");
 
-                    // Refresh SNS Facebook Status
-                    refreshSNSFacebookStatus();
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+
+                            // Refresh SNS Facebook Status
+                            refreshSNSFacebookStatus();
+                        }
+                    });
                 }
             }
         };
@@ -485,6 +522,18 @@ public class MainActivity extends AppCompatActivity {
                 cameraSSIDList.add(ssid);
                 cameraProviderList.add(provider);
 
+                Log.i(TAG, "X: " + wifiDevice.getCurrentSSID());
+                Log.i(TAG, "X: " + sonyActionCam.getIPAddress());
+
+                if (ssid.equals(wifiDevice.getCurrentSSID())
+                    && "".equals(sonyActionCam.getIPAddress())) {
+
+                    // Discover
+                    Log.i(TAG, "Discover Camera");
+
+                    sonyActionCam.discover();
+                }
+
                 dbCursor.moveToNext();
             }
         }
@@ -529,8 +578,13 @@ public class MainActivity extends AppCompatActivity {
             // Status
             status.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));
 
-            if (wifiDevice.getCurrentSSID().equals(cameraSSIDArray[listItem])) {
-                status.setText(R.string.icon_connect);
+            if (cameraSSIDArray[listItem].equals(wifiDevice.getCurrentSSID())) {
+
+                if ("".equals(sonyActionCam.getIPAddress())) {
+                    status.setText(R.string.icon_connecting);
+                } else {
+                    status.setText(R.string.icon_connected);
+                }
 
                 // Set Camera Provider
                 cameraProvider = cameraProviderArray[listItem];

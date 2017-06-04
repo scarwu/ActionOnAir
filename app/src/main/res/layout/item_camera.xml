@@ -17,7 +17,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:text="@string/icon_disconnect" />
+            android:text="@string/icon_disconnected" />
 
         <Button
             android:id="@+id/cameraSSID"
