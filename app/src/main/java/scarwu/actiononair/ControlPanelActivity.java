@@ -9,6 +9,11 @@
 
 package scarwu.actiononair;
 
+import java.io.IOException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +25,7 @@ import android.util.Log;
 import android.widget.Switch;
 
 // Custom Libs
+
 import scarwu.actiononair.libs.DBHelper;
 import scarwu.actiononair.libs.FontManager;
 import scarwu.actiononair.sns.Facebook;
@@ -61,6 +67,8 @@ public class ControlPanelActivity extends AppCompatActivity {
         appActivity = this;
         appContext = getApplicationContext();
 
+        streamSurfaceView = new StreamSurfaceView(appContext, liveView);
+
         // Get Intent Extra
         snsProvider = getIntent().getExtras().getString("snsProvider");
         cameraProvider = getIntent().getExtras().getString("cameraProvider");
@@ -71,7 +79,7 @@ public class ControlPanelActivity extends AppCompatActivity {
         } else if ("google".equals(snsProvider)) {
             snsGoogle = new Google();
         } else {
-            Log.i("AoA-Activity", "Switch");
+            Log.i(TAG, "Switch");
 
             finish();
         }
@@ -81,8 +89,44 @@ public class ControlPanelActivity extends AppCompatActivity {
             sonyActionCam = new SonyActionCam(appContext, new SonyActionCam.CallbackHandler() {
 
                 @Override
-                public void onFoundDevice(String ipAdress) {
-                    Log.i("AoA-Activity", "Switch");
+                public void onSuccess() {
+
+                    // Start LiveView
+                    try {
+                        JSONObject json = sonyActionCam.caller().startLiveview();
+
+                        Log.i(TAG, json.toString());
+
+                        final String url = json.getJSONArray("result").get(0).toString();
+
+                        runOnUiThread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                streamSurfaceView.start(url, new StreamSurfaceView.StreamErrorListener() {
+
+                                    @Override
+                                    public void onError(StreamErrorReason reason) {
+                                        try {
+                                            sonyActionCam.caller().stopLiveview();
+                                        } catch (IOException e) {
+                                            // pass
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    } catch (IOException e) {
+                        // pass
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                public void onError() {
+                    Log.i(TAG, "Switch");
+
+                    finish();
                 }
             });
         } else {
@@ -94,6 +138,17 @@ public class ControlPanelActivity extends AppCompatActivity {
 
         // Discover Device
         sonyActionCam.discover();
+    }
+
+    @Override
+    public void onStop() {
+
+        // Stop LiveView
+        try {
+            sonyActionCam.caller().stopLiveview();
+        } catch (IOException e) {
+            // pass
+        }
     }
 
     /**

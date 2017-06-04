@@ -85,7 +85,7 @@ public class RemoteApiCaller {
     // Camera Service APIs
 
     /**
-     * Caller
+     * Sender
      *
      * @param reqJson
      * @param service
@@ -93,7 +93,7 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-    private JSONObject caller(String service, JSONObject reqJson, int timeout) throws IOException {
+    private JSONObject sender(String service, JSONObject reqJson, int timeout) throws IOException {
         try {
             String url = findActionListUrl(service) + "/" + service;
 
@@ -135,7 +135,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -165,15 +165,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls getShootMode API to the target server. Request JSON data is such
-     * like as below.
+     * Calls getShootMode API
      *
      * <pre>
      * {
@@ -195,15 +194,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls setShootMode API to the target server. Request JSON data is such
-     * like as below.
+     * Calls setShootMode API
      *
      * <pre>
      * {
@@ -226,7 +224,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(shootMode))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -246,7 +244,7 @@ public class RemoteApiCaller {
      * </pre>
      *
      * @return JSON data of response
-     * @throws all errors and exception are wrapped by this Exception.
+     * @throws IOException all errors and exception are wrapped by this Exception.
      */
     public JSONObject getAvailableShootMode() throws IOException {
         String service = "camera";
@@ -256,7 +254,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -286,15 +284,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls startLiveview API to the target server. Request JSON data is such
-     * like as below.
+     * Calls startLiveview API
      *
      * <pre>
      * {
@@ -316,15 +313,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls stopLiveview API to the target server. Request JSON data is such
-     * like as below.
+     * Calls stopLiveview API
      *
      * <pre>
      * {
@@ -346,15 +342,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls startRecMode API to the target server. Request JSON data is such
-     * like as below.
+     * Calls startRecMode API
      *
      * <pre>
      * {
@@ -376,15 +371,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls actTakePicture API to the target server. Request JSON data is such
-     * like as below.
+     * Calls actTakePicture API
      *
      * <pre>
      * {
@@ -406,15 +400,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls startMovieRec API to the target server. Request JSON data is such
-     * like as below.
+     * Calls startMovieRec API
      *
      * <pre>
      * {
@@ -436,15 +429,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls stopMovieRec API to the target server. Request JSON data is such
-     * like as below.
+     * Calls stopMovieRec API
      *
      * <pre>
      * {
@@ -466,15 +458,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls actZoom API to the target server. Request JSON data is such like as
-     * below.
+     * Calls actZoom API
      *
      * <pre>
      * {
@@ -498,7 +489,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(direction).put(movement))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -530,7 +521,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(longPollingFlag))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, timeout);
+            return sender(service, json, timeout);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -561,7 +552,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(cameraFunction))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -591,7 +582,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(""))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -623,15 +614,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(""))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls getSchemeList API to the target server. Request JSON data is such
-     * like as below.
+     * Calls getSchemeList API
      *
      * <pre>
      * {
@@ -645,7 +635,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject getSchemeList() throws IOException {
         String service = "avContent";
 
@@ -654,15 +643,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls getSourceList API to the target server. Request JSON data is such
-     * like as below.
+     * Calls getSourceList API
      *
      * <pre>
      * {
@@ -679,7 +667,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject getSourceList(String scheme) throws IOException {
         String service = "avContent";
 
@@ -691,15 +678,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(0, params))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls getContentList API to the target server. Request JSON data is such
-     * like as below.
+     * Calls getContentList API
      *
      * <pre>
      * {
@@ -718,7 +704,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject getContentList(JSONArray params) throws IOException {
         String service = "avContent";
 
@@ -727,7 +712,7 @@ public class RemoteApiCaller {
                 .put("params", params)
                 .put("version", "1.3").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
@@ -753,7 +738,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject setStreamingContent(String uri) throws IOException {
         String service = "avContent";
 
@@ -766,15 +750,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray().put(0, params))
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls startStreaming API to the target server. Request JSON data is such
-     * like as below.
+     * Calls startStreaming API
      *
      * <pre>
      * {
@@ -788,7 +771,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject startStreaming() throws IOException {
         String service = "avContent";
 
@@ -797,15 +779,14 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }
     }
 
     /**
-     * Calls stopStreaming API to the target server. Request JSON data is such
-     * like as below.
+     * Calls stopStreaming API
      *
      * <pre>
      * {
@@ -819,7 +800,6 @@ public class RemoteApiCaller {
      * @return JSON data of response
      * @throws IOException all errors and exception are wrapped by this Exception.
      */
-
     public JSONObject stopStreaming() throws IOException {
         String service = "avContent";
 
@@ -828,7 +808,7 @@ public class RemoteApiCaller {
                 .put("params", new JSONArray())
                 .put("version", "1.0").put("id", id());
 
-            return caller(service, json, 0);
+            return sender(service, json, 0);
         } catch (JSONException e) {
             throw new IOException(e);
         }

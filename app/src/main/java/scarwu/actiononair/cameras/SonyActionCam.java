@@ -48,7 +48,8 @@ public class SonyActionCam {
      * Callback Handler
      */
     public interface CallbackHandler {
-        public void onFoundDevice(String ipAdress);
+        public void onSuccess();
+        public void onError();
     }
 
     /**
@@ -81,7 +82,7 @@ public class SonyActionCam {
 
                 Log.i(TAG, "Callback: Current: " + currentDeviceIP);
 
-                callbackHandler.onFoundDevice(currentDeviceIP);
+                callbackHandler.onSuccess();
             }
 
             @Override
@@ -91,7 +92,7 @@ public class SonyActionCam {
 
             @Override
             public void onError() {
-
+                callbackHandler.onError();
             }
         });
     }
@@ -99,9 +100,9 @@ public class SonyActionCam {
     /**
      * Call API
      *
-     * @return 
+     * @return
      */
-    public RemoteApiCaller call() {
+    public RemoteApiCaller caller() {
         return currentApiCaller;
     }
 

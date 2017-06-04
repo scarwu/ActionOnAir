@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         sonyActionCam = new SonyActionCam(appContext, new SonyActionCam.CallbackHandler() {
 
             @Override
-            public void onFoundDevice(String ipAddress) {
+            public void onSuccess() {
 
                 // Update UI
                 runOnUiThread(new Runnable() {
@@ -125,6 +125,11 @@ public class MainActivity extends AppCompatActivity {
                         refreshCameraList();
                     }
                 });
+            }
+
+            @Override
+            public void onError() {
+
             }
         });
 

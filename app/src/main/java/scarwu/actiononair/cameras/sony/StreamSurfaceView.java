@@ -53,12 +53,14 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private StreamErrorListener mErrorListener;
 
+    private SurfaceView liveView;
+
     /**
      * Constructor
      * 
      * @param context
      */
-    public StreamSurfaceView(Context context) {
+    public StreamSurfaceView(Context context, SurfaceView surfaceView) {
         super(context);
         getHolder().addCallback(this);
         mFramePaint = new Paint();
@@ -71,11 +73,13 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
      * @param context
      * @param attrs
      */
-    public StreamSurfaceView(Context context, AttributeSet attrs) {
+    public StreamSurfaceView(Context context, SurfaceView surfaceView, AttributeSet attrs) {
         super(context, attrs);
         getHolder().addCallback(this);
         mFramePaint = new Paint();
         mFramePaint.setDither(true);
+
+        liveView = surfaceView;
     }
 
     /**
@@ -85,11 +89,13 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
      * @param attrs
      * @param defStyle
      */
-    public StreamSurfaceView(Context context, AttributeSet attrs, int defStyle) {
+    public StreamSurfaceView(Context context, SurfaceView surfaceView, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         getHolder().addCallback(this);
         mFramePaint = new Paint();
         mFramePaint.setDither(true);
+
+        liveView = surfaceView;
     }
 
     @Override
@@ -111,7 +117,7 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
      * Start retrieving and drawing liveview frame data by new threads.
      * 
      * @return true if the starting is completed successfully, false otherwise.
-     * @see SimpleLiveviewSurfaceView#bindRemoteApi(SimpleRemoteApi)
+     * @see StreamSurfaceView #bindRemoteApi(SimpleRemoteApi)
      */
     public boolean start(final String streamUrl, StreamErrorListener listener) {
         mErrorListener = listener;
@@ -153,6 +159,7 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         if (mJpegQueue.size() == 2) {
                             mJpegQueue.remove();
                         }
+
                         mJpegQueue.add(payload.jpegData);
                     }
                 } catch (IOException e) {
@@ -254,6 +261,8 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
         Rect dst = new Rect(offsetX, offsetY, getWidth() - offsetX, getHeight() - offsetY);
         canvas.drawBitmap(frame, src, dst, mFramePaint);
         getHolder().unlockCanvasAndPost(canvas);
+
+        liveView.draw(canvas);
     }
 
     /**
