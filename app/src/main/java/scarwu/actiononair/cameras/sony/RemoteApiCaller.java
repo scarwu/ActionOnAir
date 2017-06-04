@@ -108,9 +108,9 @@ public class RemoteApiCaller {
         String service = "camera";
         try {
             JSONObject requestJson =
-                    new JSONObject().put("method", "getAvailableApiList")
-                            .put("params", new JSONArray()).put("id", id())
-                            .put("version", "1.0");
+                new JSONObject().put("method", "getAvailableApiList")
+                        .put("params", new JSONArray()).put("id", id())
+                        .put("version", "1.0");
             String url = findActionListUrl(service) + "/" + service;
 
             log("Request:  " + requestJson.toString());

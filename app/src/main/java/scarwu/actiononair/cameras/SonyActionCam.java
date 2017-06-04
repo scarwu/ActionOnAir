@@ -21,15 +21,17 @@ import android.util.Log;
 
 import scarwu.actiononair.cameras.sony.SSDPClient;
 import scarwu.actiononair.cameras.sony.RemoteDevice;
+import scarwu.actiononair.cameras.sony.RemoteApiCaller;
 
 public class SonyActionCam {
 
     private static final String TAG = "AoA-" + SonyActionCam.class.getSimpleName();
-
     public static final String MIME_TYPE = "application/x-sony-pmm";
 
     Context ctx;
     SSDPClient ssdpClient;
+    RemoteDevice currentDevice;
+    RemoteApiCaller currentApiCaller;
 
     private CallbackHandler callbackHandler;
     private String currentDeviceIP;
@@ -42,25 +44,40 @@ public class SonyActionCam {
         currentDeviceIP = "";
     }
 
+    /**
+     * Callback Handler
+     */
     public interface CallbackHandler {
         public void onFoundDevice(String ipAdress);
     }
 
+    /**
+     * Get IP Address
+     *
+     * @return String
+     */
     public String getIPAddress() {
         return currentDeviceIP;
     }
 
+    /**
+     * Discover Camera Device
+     */
     public void discover() {
 
         Log.i(TAG, "Discover");
 
         // Call SSDP Client
-        ssdpClient.search(new SSDPClient.SearchResultHandler() {
+        ssdpClient.startSearch(new SSDPClient.CallbackHandler() {
 
             @Override
             public void onDeviceFound(final RemoteDevice device) {
 
+                currentDevice = device;
                 currentDeviceIP = device.getIpAddres();
+
+                // Init Remote API Caller
+                currentApiCaller = new RemoteApiCaller(currentDevice);
 
                 Log.i(TAG, "Callback: Current: " + currentDeviceIP);
 
@@ -68,19 +85,24 @@ public class SonyActionCam {
             }
 
             @Override
-            public void onFinished() {
+            public void onFinish() {
 
             }
 
             @Override
-            public void onErrorFinished() {
+            public void onError() {
 
             }
         });
     }
 
-    public void setting() {
-
+    /**
+     * Call API
+     *
+     * @return 
+     */
+    public RemoteApiCaller call() {
+        return currentApiCaller;
     }
 
     /**

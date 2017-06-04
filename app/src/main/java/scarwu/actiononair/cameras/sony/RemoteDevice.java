@@ -35,8 +35,8 @@ public final class RemoteDevice {
      * so on. "Action List URL" is API request target URL of each service.
      */
     public static class ApiService {
-        private String mName;
 
+        private String mName;
         private String mActionListUrl;
 
         /**
@@ -93,6 +93,7 @@ public final class RemoteDevice {
          */
         public String getEndpointUrl() {
             String url = null;
+
             if (mActionListUrl == null || mName == null) {
                 url = null;
             } else if (mActionListUrl.endsWith("/")) {
@@ -100,18 +101,15 @@ public final class RemoteDevice {
             } else {
                 url = mActionListUrl + "/" + mName;
             }
+
             return url;
         }
     }
 
     private String mDDUrl;
-
     private String mFriendlyName;
-
     private String mModelName;
-
     private String mUDN;
-
     private String mIconUrl;
 
     private final List<ApiService> mApiServices;
@@ -172,9 +170,11 @@ public final class RemoteDevice {
      */
     public String getIpAddres() {
         String ip = null;
+
         if (mDDUrl != null) {
             return toHost(mDDUrl);
         }
+
         return ip;
     }
 
@@ -197,11 +197,13 @@ public final class RemoteDevice {
         if (serviceName == null) {
             return false;
         }
+
         for (ApiService apiService : mApiServices) {
             if (serviceName.equals(apiService.getName())) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -215,11 +217,13 @@ public final class RemoteDevice {
         if (serviceName == null) {
             return null;
         }
+
         for (ApiService apiService : mApiServices) {
             if (serviceName.equals(apiService.getName())) {
                 return apiService;
             }
         }
+
         return null;
     }
 
@@ -246,11 +250,14 @@ public final class RemoteDevice {
         }
 
         String ddXml = "";
+
         try {
-            ddXml = HttpClient.httpGet(ddUrl);
             Log.d(TAG, "fetch () httpGet done.");
+
+            ddXml = HttpClient.httpGet(ddUrl);
         } catch (IOException e) {
             Log.e(TAG, "fetch: IOException.", e);
+
             return null;
         }
 
@@ -258,6 +265,7 @@ public final class RemoteDevice {
 
         // "root"
         RemoteDevice device = null;
+
         if ("root".equals(rootElement.getTagName())) {
             device = new RemoteDevice();
             device.mDDUrl = ddUrl;
@@ -283,47 +291,54 @@ public final class RemoteDevice {
             // "av:X_ScalarWebAPI_DeviceInfo"
             XmlParser wApiElement = deviceElement.findChild("X_ScalarWebAPI_DeviceInfo");
             XmlParser wApiServiceListElement = wApiElement.findChild("X_ScalarWebAPI_ServiceList");
-            List<XmlParser> wApiServiceElements = wApiServiceListElement
-                    .findChildren("X_ScalarWebAPI_Service");
+            List<XmlParser> wApiServiceElements = wApiServiceListElement.findChildren("X_ScalarWebAPI_Service");
+
             for (XmlParser wApiServiceElement : wApiServiceElements) {
-                String serviceName = wApiServiceElement.findChild("X_ScalarWebAPI_ServiceType")
-                        .getValue();
-                String actionUrl = wApiServiceElement.findChild("X_ScalarWebAPI_ActionList_URL")
-                        .getValue();
+                String serviceName = wApiServiceElement.findChild("X_ScalarWebAPI_ServiceType").getValue();
+                String actionUrl = wApiServiceElement.findChild("X_ScalarWebAPI_ActionList_URL").getValue();
+
                 device.addApiService(serviceName, actionUrl);
             }
         }
+
         Log.d(TAG, "fetch () parsing XML done.");
+
         return device;
     }
 
     private static String toSchemeAndHost(String url) {
         int i = url.indexOf("://"); // http:// or https://
+
         if (i == -1) {
             return "";
         }
 
         int j = url.indexOf("/", i + 3);
+
         if (j == -1) {
             return "";
         }
 
         String hostUrl = url.substring(0, j);
+
         return hostUrl;
     }
 
     private static String toHost(String url) {
         int i = url.indexOf("://"); // http:// or https://
+
         if (i == -1) {
             return "";
         }
 
         int j = url.indexOf(":", i + 3);
+
         if (j == -1) {
             return "";
         }
 
         String host = url.substring(i + 3, j);
+        
         return host;
     }
 }

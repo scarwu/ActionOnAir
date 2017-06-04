@@ -29,9 +29,9 @@ public class WifiDevice {
 
     private static final String TAG = "AoA-" + WifiDevice.class.getSimpleName();
 
+    private CallbackHandler callbackHandler;
     private WifiManager wifiManager;
     private ConnectivityManager connManager;
-    private CallbackHandler callbackHandler;
     private String currentSSID;
 
     /**
@@ -61,6 +61,9 @@ public class WifiDevice {
         context.registerReceiver(new wifiReceiver(), filter);
     }
 
+    /**
+     * Callback Handler
+     */
     public interface CallbackHandler {
         public void onSSIDChange(String ssid);
     }

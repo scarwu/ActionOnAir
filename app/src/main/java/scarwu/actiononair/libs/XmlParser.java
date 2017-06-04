@@ -29,18 +29,13 @@ import org.xmlpull.v1.XmlPullParserException;
 
 public class XmlParser {
 
+    private static final String TAG = "AoA-" + XmlParser.class.getSimpleName();
     public static final XmlParser NULL_ELEMENT = new XmlParser();
 
-    private static final String TAG = "AoA-" + XmlParser.class.getSimpleName();
-
     private String mTagName;
-
     private String mValue;
-
     private LinkedList<XmlParser> mChildElements;
-
     private Map<String, String> mAttributes;
-
     private XmlParser mParentElement;
 
     /**
@@ -113,9 +108,11 @@ public class XmlParser {
      */
     public String getAttribute(String name, String defaultValue) {
         String ret = mAttributes.get(name);
+
         if (ret == null) {
             ret = defaultValue;
         }
+
         return ret;
     }
 
@@ -129,6 +126,7 @@ public class XmlParser {
      */
     public int getIntAttribute(String name, int defaultValue) {
         String attrValue = mAttributes.get(name);
+
         if (attrValue == null) {
             return defaultValue;
         } else {
@@ -159,6 +157,7 @@ public class XmlParser {
                 return child;
             }
         }
+
         return NULL_ELEMENT;
     }
 
@@ -171,11 +170,13 @@ public class XmlParser {
      */
     public List<XmlParser> findChildren(String name) {
         final List<XmlParser> tagItemList = new ArrayList<XmlParser>();
+
         for (final XmlParser child : mChildElements) {
             if (child.getTagName().equals(name)) {
                 tagItemList.add(child);
             }
         }
+
         return tagItemList;
     }
 
@@ -210,8 +211,10 @@ public class XmlParser {
     public static XmlParser parse(XmlPullParser xmlPullParser) {
 
         XmlParser rootElement = XmlParser.NULL_ELEMENT;
+
         try {
             XmlParser parsingElement = XmlParser.NULL_ELEMENT;
+
             MAINLOOP: while (true) {
                 switch (xmlPullParser.next()) {
                     case XmlPullParser.START_DOCUMENT:
@@ -219,25 +222,31 @@ public class XmlParser {
                     case XmlPullParser.START_TAG:
                         final XmlParser childItem = new XmlParser();
                         childItem.setTagName(xmlPullParser.getName());
+
                         if (parsingElement == XmlParser.NULL_ELEMENT) {
                             rootElement = childItem;
                         } else {
                             parsingElement.putChild(childItem);
                         }
+
                         parsingElement = childItem;
 
                         // Set Attribute
                         for (int i = 0; i < xmlPullParser.getAttributeCount(); i++) {
-                            parsingElement.putAttribute(xmlPullParser.getAttributeName(i),
-                                    xmlPullParser
-                                            .getAttributeValue(i));
+                            parsingElement.putAttribute(
+                                xmlPullParser.getAttributeName(i),
+                                xmlPullParser.getAttributeValue(i)
+                            );
                         }
+
                         break;
                     case XmlPullParser.TEXT:
                         parsingElement.setValue(xmlPullParser.getText());
+
                         break;
                     case XmlPullParser.END_TAG:
                         parsingElement = parsingElement.getParent();
+
                         break;
                     case XmlPullParser.END_DOCUMENT:
                         break MAINLOOP;
@@ -247,11 +256,14 @@ public class XmlParser {
             }
         } catch (final XmlPullParserException e) {
             Log.e(TAG, "parseXml: XmlPullParserException.");
+
             rootElement = XmlParser.NULL_ELEMENT;
         } catch (final IOException e) {
             Log.e(TAG, "parseXml: IOException.");
+
             rootElement = XmlParser.NULL_ELEMENT;
         }
+
         return rootElement;
     }
 
@@ -265,12 +277,15 @@ public class XmlParser {
         if (xmlStr == null) {
             throw new NullPointerException("parseXml: input is null.");
         }
+
         try {
             XmlPullParser xmlPullParser = Xml.newPullParser();
             xmlPullParser.setInput(new StringReader(xmlStr));
+
             return parse(xmlPullParser);
         } catch (final XmlPullParserException e) {
             Log.e(TAG, "parseXml: XmlPullParserException occured.");
+
             return XmlParser.NULL_ELEMENT;
         }
     }

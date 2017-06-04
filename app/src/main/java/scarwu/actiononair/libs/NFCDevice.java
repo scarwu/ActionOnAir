@@ -26,11 +26,6 @@ public class NFCDevice {
     private static final String TAG = "AoA-" + NFCDevice.class.getSimpleName();
 
     private CallbackHandler callbackHandler;
-
-    public interface CallbackHandler {
-        public void onTAGReceive(Tag tag);
-    }
-
     private NfcAdapter nfcAdapter;
 
     /**
@@ -44,6 +39,13 @@ public class NFCDevice {
 
         // Initialize
         nfcAdapter = NfcAdapter.getDefaultAdapter(context);
+    }
+
+    /**
+     * Callback Handler
+     */
+    public interface CallbackHandler {
+        public void onTAGReceive(Tag tag);
     }
 
     public void onNewIntent(Intent intent) {

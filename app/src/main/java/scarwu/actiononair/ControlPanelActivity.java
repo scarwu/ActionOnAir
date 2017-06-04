@@ -25,6 +25,7 @@ import scarwu.actiononair.libs.FontManager;
 import scarwu.actiononair.sns.Facebook;
 import scarwu.actiononair.sns.Google;
 import scarwu.actiononair.cameras.SonyActionCam;
+import scarwu.actiononair.cameras.sony.StreamSurfaceView;
 
 public class ControlPanelActivity extends AppCompatActivity {
 
@@ -47,6 +48,8 @@ public class ControlPanelActivity extends AppCompatActivity {
     private Google snsGoogle;
 
     private SonyActionCam sonyActionCam;
+
+    private StreamSurfaceView streamSurfaceView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +82,7 @@ public class ControlPanelActivity extends AppCompatActivity {
 
                 @Override
                 public void onFoundDevice(String ipAdress) {
-
+                    Log.i("AoA-Activity", "Switch");
                 }
             });
         } else {

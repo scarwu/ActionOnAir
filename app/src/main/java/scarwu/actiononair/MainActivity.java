@@ -115,8 +115,9 @@ public class MainActivity extends AppCompatActivity {
         sonyActionCam = new SonyActionCam(appContext, new SonyActionCam.CallbackHandler() {
 
             @Override
-            public void onFoundDevice(String ipAdress) {
+            public void onFoundDevice(String ipAddress) {
 
+                // Update UI
                 runOnUiThread(new Runnable() {
                     public void run() {
 
@@ -133,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSSIDChange(String ssid) {
 
+                // Update UI
                 runOnUiThread(new Runnable() {
                     public void run() {
 
@@ -157,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 // Add Camera
                 dbHelper.addCameraItem(setting[0], setting[1], "sony");
 
+                // Update UI
                 runOnUiThread(new Runnable() {
                     public void run() {
 
@@ -254,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
                 dbHelper.removeSNSItem("facebook");
                 dbHelper.addSNSItem("facebook", token);
 
+                // Update UI
                 runOnUiThread(new Runnable() {
                     public void run() {
 
@@ -283,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
                     dbHelper.removeSNSItem("facebook");
 
+                    // Update UI
                     runOnUiThread(new Runnable() {
                         public void run() {
 
@@ -521,9 +526,6 @@ public class MainActivity extends AppCompatActivity {
 
                 cameraSSIDList.add(ssid);
                 cameraProviderList.add(provider);
-
-                Log.i(TAG, "X: " + wifiDevice.getCurrentSSID());
-                Log.i(TAG, "X: " + sonyActionCam.getIPAddress());
 
                 if (ssid.equals(wifiDevice.getCurrentSSID())
                     && "".equals(sonyActionCam.getIPAddress())) {

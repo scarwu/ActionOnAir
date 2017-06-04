@@ -29,44 +29,21 @@ import scarwu.actiononair.cameras.sony.RemoteDevice;
 public class SSDPClient {
 
     private static final String TAG = "AoA-" + SSDPClient.class.getSimpleName();
-
+    private static final String SSDP_ADDR = "239.255.255.250";
+    private static final int SSDP_PORT = 1900;
     private static final int SSDP_RECEIVE_TIMEOUT = 10000; // msec
 
-    private static final int PACKET_BUFFER_SIZE = 1024;
+    private boolean isSearch = false;
 
-    private static final int SSDP_PORT = 1900;
+    public SSDPClient() {
 
-    private static final int SSDP_MX = 1;
-
-    private static final String SSDP_ADDR = "239.255.255.250";
-
-    private static final String SSDP_ST = "urn:schemas-sony-com:service:ScalarWebAPI:1";
-
-    /** Handler interface for SSDP search result. */
-    public interface SearchResultHandler {
-
-        /**
-         * Called when API server device is found. Note that it's performed by
-         * non-UI thread.
-         *
-         * @param device API server device that is found by searching
-         */
-        void onDeviceFound(RemoteDevice device);
-
-        /**
-         * Called when searching completes successfully. Note that it's
-         * performed by non-UI thread.
-         */
-        void onFinished();
-
-        /**
-         * Called when searching completes with some errors. Note that it's
-         * performed by non-UI thread.
-         */
-        void onErrorFinished();
     }
 
-    private boolean mSearching = false;
+    public interface CallbackHandler {
+        void onDeviceFound(RemoteDevice device);
+        void onFinish();
+        void onError();
+    }
 
     /**
      * Search API server device.
@@ -74,77 +51,91 @@ public class SSDPClient {
      * @param handler result handler
      * @return true: start successfully, false: already searching now
      */
-    public synchronized boolean search(final SearchResultHandler handler) {
-        if (mSearching) {
-            Log.w(TAG, "search() already searching.");
+    public synchronized boolean startSearch(final CallbackHandler handler) {
+        if (isSearch) {
+            Log.w(TAG, "Search: Already Searching");
             return false;
         }
+
         if (handler == null) {
-            throw new NullPointerException("handler is null.");
+            throw new NullPointerException("Handler is null");
         }
-        Log.i(TAG, "search() Start.");
+
+        Log.i(TAG, "Search: Start.");
 
         final String ssdpRequest =
-                "M-SEARCH * HTTP/1.1\r\n" + String.format("HOST: %s:%d\r\n", SSDP_ADDR, SSDP_PORT)
-                        + String.format("MAN: \"ssdp:discover\"\r\n")
-                        + String.format("MX: %d\r\n", SSDP_MX)
-                        + String.format("ST: %s\r\n", SSDP_ST) + "\r\n";
+            "M-SEARCH * HTTP/1.1\r\n"
+                + String.format("HOST: %s:%d\r\n", SSDP_ADDR, SSDP_PORT)
+                + "MAN: \"ssdp:discover\"\r\n"
+                + "MX: 1\r\n"
+                + "ST: urn:schemas-sony-com:service:ScalarWebAPI:1\r\n\r\n";
         final byte[] sendData = ssdpRequest.getBytes();
 
         new Thread() {
 
             @Override
             public void run() {
+
                 // Send Datagram packets
                 DatagramSocket socket = null;
-                DatagramPacket receivePacket = null;
-                DatagramPacket packet = null;
+                DatagramPacket resPacket = null;
+                DatagramPacket reqPacket = null;
+
                 try {
-                    socket = new DatagramSocket();
                     InetSocketAddress iAddress = new InetSocketAddress(SSDP_ADDR, SSDP_PORT);
-                    packet = new DatagramPacket(sendData, sendData.length, iAddress);
+
+                    socket = new DatagramSocket();
+                    reqPacket = new DatagramPacket(sendData, sendData.length, iAddress);
+
                     // send 3 times
-                    Log.i(TAG, "search() Send Datagram packet 3 times.");
-                    socket.send(packet);
+                    Log.i(TAG, "Search: Send Datagram Packets");
+
+                    socket.send(reqPacket);
                     Thread.sleep(100);
-                    socket.send(packet);
+                    socket.send(reqPacket);
                     Thread.sleep(100);
-                    socket.send(packet);
+                    socket.send(reqPacket);
                 } catch (SocketException e) {
-                    Log.e(TAG, "search() DatagramSocket error:", e);
+                    Log.e(TAG, "Search: SocketException:", e);
+
                     if (socket != null && !socket.isClosed()) {
                         socket.close();
                     }
-                    handler.onErrorFinished();
+
+                    handler.onError();
+
                     return;
-                } catch (IOException e) {
-                    Log.e(TAG, "search() IOException :", e);
+                }catch (IOException e) {
+                    Log.e(TAG, "Search: IOException:", e);
+
                     if (socket != null && !socket.isClosed()) {
                         socket.close();
                     }
-                    handler.onErrorFinished();
+
+                    handler.onError();
+
                     return;
-                } catch (InterruptedException e) {
+                }  catch (InterruptedException e) {
                     // do nothing.
-                    Log.d(TAG, "search() InterruptedException :", e);
+                    Log.d(TAG, "Search: InterruptedException:", e);
                 }
 
                 // Receive reply packets
-                mSearching = true;
+                isSearch = true;
                 long startTime = System.currentTimeMillis();
                 List<String> foundDevices = new ArrayList<String>();
-                byte[] array = new byte[PACKET_BUFFER_SIZE];
+                byte[] array = new byte[1024];
                 RemoteDevice device = null;
+
                 try {
-
-                    while (mSearching) {
-                        receivePacket = new DatagramPacket(array, array.length);
+                    while (isSearch) {
+                        resPacket = new DatagramPacket(array, array.length);
                         socket.setSoTimeout(SSDP_RECEIVE_TIMEOUT);
-                        socket.receive(receivePacket);
-                        String ssdpReplyMessage = new String(receivePacket.getData(), 0, //
-                                receivePacket.getLength(), "UTF-8");
-                        String ddUsn = findParameterValue(ssdpReplyMessage, "USN");
+                        socket.receive(resPacket);
 
+                        String ssdpReplyMessage = new String(resPacket.getData(), 0, resPacket.getLength(), "UTF-8");
+                        String ddUsn = findParameterValue(ssdpReplyMessage, "USN");
+                        Log.i(TAG, ssdpReplyMessage);
                         /*
                          * There is possibility to receive multiple packets from
                          * a individual server.
@@ -160,34 +151,43 @@ public class SSDPClient {
                             if (device != null && device.hasApiService("camera")) {
                                 handler.onDeviceFound(device);
                             }
+
+                            break;
                         }
+
                         if (SSDP_RECEIVE_TIMEOUT < System.currentTimeMillis() - startTime) {
                             break;
                         }
                     }
-
                 } catch (InterruptedIOException e) {
-                    Log.d(TAG, "search() Timeout.");
+                    Log.d(TAG, "Search: InterruptedIOException:", e);
 
                     if (device == null) {
-                        mSearching = false;
-                        handler.onErrorFinished();
+                        isSearch = false;
+
+                        handler.onError();
+
                         return;
                     }
                 } catch (IOException e) {
-                    Log.d(TAG, "search() IOException2. : " + e);
-                    mSearching = false;
-                    handler.onErrorFinished();
+                    Log.d(TAG, "Search: IOException:", e);
+
+                    isSearch = false;
+
+                    handler.onError();
+
                     return;
                 } finally {
-                    Log.d(TAG, "search() Finish ");
-                    mSearching = false;
+                    Log.d(TAG, "Search: Finish");
+
+                    isSearch = false;
+
                     if (socket != null && !socket.isClosed()) {
                         socket.close();
                     }
                 }
 
-                handler.onFinished();
+                handler.onFinish();
             };
         }.start();
 
@@ -199,15 +199,15 @@ public class SSDPClient {
      *
      * @return true: now searching, false: otherwise
      */
-    public boolean isSearching() {
-        return mSearching;
+    public boolean isSearch() {
+        return isSearch;
     }
 
     /**
      * Cancels searching. Note that it cannot stop the operation immediately.
      */
-    public void cancelSearching() {
-        mSearching = false;
+    public void stopSearch() {
+        isSearch = false;
     }
 
     /**
@@ -216,18 +216,23 @@ public class SSDPClient {
      */
     private static String findParameterValue(String ssdpMessage, String paramName) {
         String name = paramName;
+
         if (!name.endsWith(":")) {
             name = name + ":";
         }
+
         int start = ssdpMessage.indexOf(name);
         int end = ssdpMessage.indexOf("\r\n", start);
+
         if (start != -1 && end != -1) {
             start += name.length();
             String val = ssdpMessage.substring(start, end);
+
             if (val != null) {
                 return val.trim();
             }
         }
+
         return null;
     }
 }
