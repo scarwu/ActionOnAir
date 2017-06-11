@@ -39,63 +39,60 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private static final String TAG = "AoA-" + StreamSurfaceView.class.getSimpleName();
 
-    private boolean mWhileFetching;
+    private final BlockingQueue<byte[]> jpegQueue = new ArrayBlockingQueue<byte[]>(2);
 
-    private final BlockingQueue<byte[]> mJpegQueue = new ArrayBlockingQueue<byte[]>(2);
-
-    private Thread mDrawerThread;
-
-    private int mPreviousWidth = 0;
-
-    private int mPreviousHeight = 0;
-
+    private Thread fetchThread;
+    private Thread drawerThread;
+    private int prevWidth = 0;
+    private int prevHeight = 0;
     private final Paint mFramePaint;
-
     private StreamErrorListener mErrorListener;
 
-    private SurfaceView liveView;
+    private boolean isFetch;
 
     /**
      * Constructor
-     * 
+     *
      * @param context
      */
-    public StreamSurfaceView(Context context, SurfaceView surfaceView) {
+    public StreamSurfaceView(Context context) {
         super(context);
+
         getHolder().addCallback(this);
+
         mFramePaint = new Paint();
         mFramePaint.setDither(true);
     }
 
     /**
      * Constructor
-     * 
+     *
      * @param context
      * @param attrs
      */
-    public StreamSurfaceView(Context context, SurfaceView surfaceView, AttributeSet attrs) {
+    public StreamSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
         getHolder().addCallback(this);
+
         mFramePaint = new Paint();
         mFramePaint.setDither(true);
-
-        liveView = surfaceView;
     }
 
     /**
      * Constructor
-     * 
+     *
      * @param context
      * @param attrs
      * @param defStyle
      */
-    public StreamSurfaceView(Context context, SurfaceView surfaceView, AttributeSet attrs, int defStyle) {
+    public StreamSurfaceView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
         getHolder().addCallback(this);
+
         mFramePaint = new Paint();
         mFramePaint.setDither(true);
-
-        liveView = surfaceView;
     }
 
     @Override
@@ -110,37 +107,43 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        mWhileFetching = false;
+        isFetch = false;
     }
 
     /**
      * Start retrieving and drawing liveview frame data by new threads.
-     * 
+     *
      * @return true if the starting is completed successfully, false otherwise.
      * @see StreamSurfaceView #bindRemoteApi(SimpleRemoteApi)
      */
-    public boolean start(final String streamUrl, StreamErrorListener listener) {
+    public boolean startFetch(final String streamUrl, StreamErrorListener listener) {
         mErrorListener = listener;
 
         if (streamUrl == null) {
             Log.e(TAG, "start() streamUrl is null.");
-            mWhileFetching = false;
+
+            isFetch = false;
+
             mErrorListener.onError(StreamErrorListener.StreamErrorReason.OPEN_ERROR);
+
             return false;
         }
 
-        if (mWhileFetching) {
+        if (isFetch) {
             Log.w(TAG, "start() already starting.");
+
             return false;
         }
 
-        mWhileFetching = true;
+        isFetch = true;
 
         // A thread for retrieving liveview data from server.
-        new Thread() {
+        fetchThread = new Thread() {
+
             @Override
             public void run() {
                 Log.d(TAG, "Starting retrieving streaming data from server.");
+
                 StreamSlicer slicer = null;
 
                 try {
@@ -149,42 +152,50 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     slicer = new StreamSlicer();
                     slicer.open(streamUrl);
 
-                    while (mWhileFetching) {
+                    while (isFetch) {
                         final Payload payload = slicer.nextPayload();
+
                         if (payload == null) { // never occurs
                             Log.e(TAG, "Liveview Payload is null.");
+
                             continue;
                         }
 
-                        if (mJpegQueue.size() == 2) {
-                            mJpegQueue.remove();
+                        if (jpegQueue.size() == 2) {
+                            jpegQueue.remove();
                         }
 
-                        mJpegQueue.add(payload.jpegData);
+                        jpegQueue.add(payload.jpegData);
                     }
                 } catch (IOException e) {
                     Log.w(TAG, "IOException while fetching: " + e.getMessage());
+
                     mErrorListener.onError(StreamErrorListener.StreamErrorReason.IO_EXCEPTION);
                 } finally {
                     if (slicer != null) {
                         slicer.close();
                     }
 
-                    if (mDrawerThread != null) {
-                        mDrawerThread.interrupt();
+                    if (drawerThread != null) {
+                        drawerThread.interrupt();
                     }
 
-                    mJpegQueue.clear();
-                    mWhileFetching = false;
+                    jpegQueue.clear();
+
+                    isFetch = false;
                 }
             }
-        }.start();
+        };
+
+        fetchThread.start();
 
         // A thread for drawing liveview frame fetched by above thread.
-        mDrawerThread = new Thread() {
+        drawerThread = new Thread() {
+
             @Override
             public void run() {
                 Log.d(TAG, "Starting drawing stream frame.");
+
                 Bitmap frameBitmap = null;
 
                 BitmapFactory.Options factoryOptions = new BitmapFactory.Options();
@@ -192,21 +203,23 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 factoryOptions.inBitmap = null;
                 factoryOptions.inMutable = true;
 
-                while (mWhileFetching) {
+                while (isFetch) {
                     try {
-                        byte[] jpegData = mJpegQueue.take();
-                        frameBitmap = BitmapFactory.decodeByteArray(//
-                                jpegData, 0, jpegData.length, factoryOptions);
+                        byte[] jpegData = jpegQueue.take();
+                        frameBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length, factoryOptions);
                     } catch (IllegalArgumentException e) {
                         if (factoryOptions.inBitmap != null) {
                             factoryOptions.inBitmap.recycle();
                             factoryOptions.inBitmap = null;
                         }
+
                         continue;
                     } catch (InterruptedException e) {
                         Log.i(TAG, "Drawer thread is Interrupted.");
+
                         break;
                     }
+
                     factoryOptions.inBitmap = frameBitmap;
                     drawFrame(frameBitmap);
                 }
@@ -214,67 +227,74 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 if (frameBitmap != null) {
                     frameBitmap.recycle();
                 }
-                mWhileFetching = false;
+
+                isFetch = false;
             }
         };
-        mDrawerThread.start();
+
+        drawerThread.start();
+
         return true;
     }
 
     /**
      * Request to stop retrieving and drawing liveview data.
      */
-    public void stop() {
-        mWhileFetching = false;
+    public void stopFetch() {
+        isFetch = false;
     }
 
     /**
      * Check to see whether start() is already called.
-     * 
+     *
      * @return true if start() is already called, false otherwise.
      */
-    public boolean isStarted() {
-        return mWhileFetching;
+    public boolean isFetching() {
+        return isFetch;
     }
 
     /**
      * Draw frame bitmap onto a canvas.
-     * 
+     *
      * @param frame
      */
     private void drawFrame(Bitmap frame) {
-        if (frame.getWidth() != mPreviousWidth || frame.getHeight() != mPreviousHeight) {
+        if (frame.getWidth() != prevWidth || frame.getHeight() != prevHeight) {
             onDetectedFrameSizeChanged(frame.getWidth(), frame.getHeight());
             return;
         }
+
         Canvas canvas = getHolder().lockCanvas();
+
         if (canvas == null) {
             return;
         }
+
         int w = frame.getWidth();
         int h = frame.getHeight();
         Rect src = new Rect(0, 0, w, h);
 
         float by = Math.min((float) getWidth() / w, (float) getHeight() / h);
+
         int offsetX = (getWidth() - (int) (w * by)) / 2;
         int offsetY = (getHeight() - (int) (h * by)) / 2;
         Rect dst = new Rect(offsetX, offsetY, getWidth() - offsetX, getHeight() - offsetY);
-        canvas.drawBitmap(frame, src, dst, mFramePaint);
-        getHolder().unlockCanvasAndPost(canvas);
 
-        liveView.draw(canvas);
+        canvas.drawBitmap(frame, src, dst, mFramePaint);
+
+        getHolder().unlockCanvasAndPost(canvas);
     }
 
     /**
      * Called when the width or height of liveview frame image is changed.
-     * 
+     *
      * @param width
      * @param height
      */
     private void onDetectedFrameSizeChanged(int width, int height) {
         Log.d(TAG, "Change of aspect ratio detected");
-        mPreviousWidth = width;
-        mPreviousHeight = height;
+        prevWidth = width;
+        prevHeight = height;
         drawBlackFrame();
         drawBlackFrame();
         drawBlackFrame(); // delete triple buffers
@@ -285,6 +305,7 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
      */
     private void drawBlackFrame() {
         Canvas canvas = getHolder().lockCanvas();
+
         if (canvas == null) {
             return;
         }

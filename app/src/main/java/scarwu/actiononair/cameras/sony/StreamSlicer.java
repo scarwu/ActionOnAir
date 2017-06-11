@@ -56,7 +56,7 @@ public class StreamSlicer {
 
     /**
      * Opens Liveview HTTP GET connection and prepares for reading Packet data.
-     * 
+     *
      * @param liveviewUrl Liveview data url that is obtained by DD.xml or result
      *            of startLiveview API.
      * @throws IOException generic errors or exception.
@@ -79,7 +79,7 @@ public class StreamSlicer {
 
     /**
      * Closes the connection.
-     * 
+     *
      * @throws IOException generic errors or exception.
      */
     public void close() {
@@ -96,7 +96,6 @@ public class StreamSlicer {
             mHttpConn.disconnect();
             mHttpConn = null;
         }
-
     }
 
     public Payload nextPayload() throws IOException {
@@ -107,6 +106,7 @@ public class StreamSlicer {
             // Common Header
             int readLength = 1 + 1 + 2 + 4;
             byte[] commonHeader = readBytes(mInputStream, readLength);
+
             if (commonHeader == null || commonHeader.length != readLength) {
                 throw new IOException("Cannot read stream for common header.");
             }
@@ -131,6 +131,7 @@ public class StreamSlicer {
                     break;
             }
         }
+
         return payload;
     }
 
@@ -138,7 +139,7 @@ public class StreamSlicer {
      * Reads liveview stream and slice one Packet. If server is not ready for
      * liveview data, this API calling will be blocked until server returns next
      * data.
-     * 
+     *
      * @return Payload data of sliced Packet
      * @throws IOException generic errors or exception.
      */
@@ -148,14 +149,17 @@ public class StreamSlicer {
             // Payload Header
             int readLength = 4 + 3 + 1 + 4 + 1 + 115;
             byte[] payloadHeader = readBytes(mInputStream, readLength);
+
             if (payloadHeader == null || payloadHeader.length != readLength) {
                 throw new IOException("Cannot read stream for payload header.");
             }
+
             if (payloadHeader[0] != (byte) 0x24 || payloadHeader[1] != (byte) 0x35
                     || payloadHeader[2] != (byte) 0x68
                     || payloadHeader[3] != (byte) 0x79) {
                 throw new IOException("Unexpected data format. (Start code)");
             }
+
             int jpegSize = bytesToInt(payloadHeader, 4, 3);
             int paddingSize = bytesToInt(payloadHeader, 7, 1);
 
@@ -165,12 +169,13 @@ public class StreamSlicer {
 
             return new Payload(jpegData, paddingData);
         }
+
         return null;
     }
 
     /**
      * Converts byte array to int.
-     * 
+     *
      * @param byteData
      * @param startIndex
      * @param count
@@ -178,15 +183,17 @@ public class StreamSlicer {
      */
     private static int bytesToInt(byte[] byteData, int startIndex, int count) {
         int ret = 0;
+
         for (int i = startIndex; i < startIndex + count; i++) {
             ret = (ret << 8) | (byteData[i] & 0xff);
         }
+
         return ret;
     }
 
     /**
      * Reads byte array from the indicated input stream.
-     * 
+     *
      * @param in
      * @param length
      * @return
@@ -195,19 +202,26 @@ public class StreamSlicer {
     private static byte[] readBytes(InputStream in, int length) throws IOException {
         ByteArrayOutputStream tmpByteArray = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
+
         while (true) {
             int trialReadlen = Math.min(buffer.length, length - tmpByteArray.size());
             int readlen = in.read(buffer, 0, trialReadlen);
+
             if (readlen < 0) {
                 break;
             }
+
             tmpByteArray.write(buffer, 0, readlen);
+
             if (length <= tmpByteArray.size()) {
                 break;
             }
         }
+
         byte[] ret = tmpByteArray.toByteArray();
+
         tmpByteArray.close();
+
         return ret;
     }
 }

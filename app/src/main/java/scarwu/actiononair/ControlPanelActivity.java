@@ -18,14 +18,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.util.Log;
 import android.widget.Switch;
 
 // Custom Libs
-
 import scarwu.actiononair.libs.DBHelper;
 import scarwu.actiononair.libs.FontManager;
 import scarwu.actiononair.sns.Facebook;
@@ -43,7 +42,7 @@ public class ControlPanelActivity extends AppCompatActivity {
     // Widgets
     private Switch micSoundSrcSwitch;
     private Switch camSoundSrcSwitch;
-    private SurfaceView liveView;
+    private StreamSurfaceView liveView;
 
     // Flags
     private boolean isLive = false;
@@ -55,19 +54,17 @@ public class ControlPanelActivity extends AppCompatActivity {
 
     private SonyActionCam sonyActionCam;
 
-    private StreamSurfaceView streamSurfaceView;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_control_panel);
 
         // Get Application Objects
         appActivity = this;
         appContext = getApplicationContext();
-
-        streamSurfaceView = new StreamSurfaceView(appContext, liveView);
 
         // Get Intent Extra
         snsProvider = getIntent().getExtras().getString("snsProvider");
@@ -99,11 +96,12 @@ public class ControlPanelActivity extends AppCompatActivity {
 
                         final String url = json.getJSONArray("result").get(0).toString();
 
+                        // Update UI
                         runOnUiThread(new Runnable() {
 
                             @Override
                             public void run() {
-                                streamSurfaceView.start(url, new StreamSurfaceView.StreamErrorListener() {
+                                liveView.startFetch(url, new StreamSurfaceView.StreamErrorListener() {
 
                                     @Override
                                     public void onError(StreamErrorReason reason) {
@@ -190,7 +188,7 @@ public class ControlPanelActivity extends AppCompatActivity {
         });
 
         // Live View
-        liveView = (SurfaceView) findViewById(R.id.liveView);
+        liveView = (StreamSurfaceView) findViewById(R.id.liveView);
 
         micSoundSrcSwitch = (Switch) findViewById(R.id.micSwitch);
         micSoundSrcSwitch.setTypeface(FontManager.getTypeface(appContext, FontManager.FONTAWESOME));

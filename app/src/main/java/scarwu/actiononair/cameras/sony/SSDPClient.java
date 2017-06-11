@@ -199,7 +199,7 @@ public class SSDPClient {
      *
      * @return true: now searching, false: otherwise
      */
-    public boolean isSearch() {
+    public boolean isSearching() {
         return isSearch;
     }
 
