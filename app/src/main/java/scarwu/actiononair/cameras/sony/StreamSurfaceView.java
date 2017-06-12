@@ -189,6 +189,11 @@ public class StreamSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         fetchThread.start();
 
+        // Set Fixed Width & Height
+        int width = getWidth();
+        int height = (width * 9) / 16;
+        getHolder().setFixedSize(width, height);
+
         // A thread for drawing liveview frame fetched by above thread.
         drawerThread = new Thread() {
 

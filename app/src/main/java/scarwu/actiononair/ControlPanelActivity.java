@@ -141,12 +141,21 @@ public class ControlPanelActivity extends AppCompatActivity {
     @Override
     public void onStop() {
 
-        // Stop LiveView
-        try {
-            sonyActionCam.caller().stopLiveview();
-        } catch (IOException e) {
-            // pass
-        }
+        new Thread() {
+            public void run() {
+                try {
+                    // Stop LiveView
+                    sonyActionCam.caller().stopLiveview();
+
+                    // Stop Movie Sec
+                    if (isLive) {
+                        sonyActionCam.caller().stopMovieRec();
+                    }
+                } catch (IOException e) {
+                    // pass
+                }
+            }
+        }.start();
     }
 
     /**
@@ -168,6 +177,17 @@ public class ControlPanelActivity extends AppCompatActivity {
                         snsGoogle.liveStream.stop();
                     }
 
+                    // Stop Movie Rec
+                    new Thread() {
+                        public void run() {
+                            try {
+                                sonyActionCam.caller().stopMovieRec();
+                            } catch (IOException e) {
+                                // pass
+                            }
+                        }
+                    }.start();
+
                     // Set Start Icon
                     startAndStop.setText(R.string.icon_start);
 
@@ -178,6 +198,17 @@ public class ControlPanelActivity extends AppCompatActivity {
                     } else if ("google".equals(snsProvider)) {
                         snsGoogle.liveStream.start();
                     }
+
+                    // Start Movie Rec
+                    new Thread() {
+                        public void run() {
+                            try {
+                                sonyActionCam.caller().startMovieRec();
+                            } catch (IOException e) {
+                                // pass
+                            }
+                        }
+                    }.start();
 
                     // Set Stop Icon
                     startAndStop.setText(R.string.icon_stop);
