@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -38,6 +39,9 @@ public class ControlPanelActivity extends AppCompatActivity {
 
     private Activity appActivity;
     private Context appContext;
+
+    // SQLite
+    private DBHelper dbHelper;
 
     // Widgets
     private Switch micSoundSrcSwitch;
@@ -66,13 +70,45 @@ public class ControlPanelActivity extends AppCompatActivity {
         appActivity = this;
         appContext = getApplicationContext();
 
+        // DB Helper
+        dbHelper = new DBHelper(appContext);
+
         // Get Intent Extra
         snsProvider = getIntent().getExtras().getString("snsProvider");
         cameraProvider = getIntent().getExtras().getString("cameraProvider");
 
         // Social Network
         if ("facebook".equals(snsProvider)) {
-            snsFacebook = new Facebook();
+            dbHelper.getSNSItem(snsProvider);
+
+            Cursor dbCursor = dbHelper.getSNSItem("facebook");
+
+            if (0 == dbCursor.getCount()) {
+                finish();
+            }
+
+            dbCursor.moveToFirst();
+
+            String token = dbCursor.getString(dbCursor.getColumnIndex("token"));
+
+            try {
+                snsFacebook = new Facebook(token);
+            } catch (IOException e) {
+                finish();
+            } catch (JSONException e) {
+                finish();
+            }
+
+            // Network Thread
+            new Thread() {
+                public void run() {
+                    try {
+                        snsFacebook.getUserId();
+                    } catch (IOException e) {
+                        // pass
+                    }
+                }
+            }.start();
         } else if ("google".equals(snsProvider)) {
             snsGoogle = new Google();
         } else {
@@ -141,15 +177,20 @@ public class ControlPanelActivity extends AppCompatActivity {
     @Override
     public void onStop() {
 
+        // Network Thread
         new Thread() {
             public void run() {
                 try {
                     // Stop LiveView
                     sonyActionCam.caller().stopLiveview();
 
-                    // Stop Movie Sec
+
                     if (isLive) {
+                        // Stop Movie Sec
                         sonyActionCam.caller().stopMovieRec();
+
+                        // Stop Streaming
+                        sonyActionCam.caller().stopStreaming();
                     }
                 } catch (IOException e) {
                     // pass
@@ -171,16 +212,21 @@ public class ControlPanelActivity extends AppCompatActivity {
 
             public void onClick(View view) {
                 if (isLive) {
-                    if ("facebook".equals(snsProvider)) {
-                        snsFacebook.liveStream.stop();
-                    } else if ("google".equals(snsProvider)) {
-                        snsGoogle.liveStream.stop();
-                    }
 
-                    // Stop Movie Rec
+                    // Network Thread
                     new Thread() {
                         public void run() {
                             try {
+                                if ("facebook".equals(snsProvider)) {
+                                    snsFacebook.stopStreaming();
+                                } else if ("google".equals(snsProvider)) {
+                                    snsGoogle.stopStreaming();
+                                }
+
+                                // Stop Streaming
+                                sonyActionCam.caller().stopStreaming();
+
+                                // Stop Movie Rec
                                 sonyActionCam.caller().stopMovieRec();
                             } catch (IOException e) {
                                 // pass
@@ -193,17 +239,25 @@ public class ControlPanelActivity extends AppCompatActivity {
 
                     isLive = false;
                 } else {
-                    if ("facebook".equals(snsProvider)) {
-                        snsFacebook.liveStream.start();
-                    } else if ("google".equals(snsProvider)) {
-                        snsGoogle.liveStream.start();
-                    }
 
-                    // Start Movie Rec
+                    // Network Thread
                     new Thread() {
                         public void run() {
                             try {
+                                // Start Movie Rec
                                 sonyActionCam.caller().startMovieRec();
+
+//                                sonyActionCam.caller().getContentList();
+//                                sonyActionCam.caller().setStreamingContent();
+
+                                // Start Streaming
+                                sonyActionCam.caller().startStreaming();
+
+                                if ("facebook".equals(snsProvider)) {
+                                    snsFacebook.startStreaming();
+                                } else if ("google".equals(snsProvider)) {
+                                    snsGoogle.startStreaming();
+                                }
                             } catch (IOException e) {
                                 // pass
                             }

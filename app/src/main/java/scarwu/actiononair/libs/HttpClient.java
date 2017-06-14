@@ -135,12 +135,11 @@ public final class HttpClient {
      * string.
      *
      * @param url request target
-     * @param postData POST body data as string (ex. JSON)
      * @return response as string
      * @throws IOException all errors and exception are wrapped by this
      *             Exception.
      */
-    public static String httpPost(String url, String postData) throws IOException {
+    public static String httpPost(String url) throws IOException {
         return httpPost(url, postData, DEFAULT_READ_TIMEOUT);
     }
 
